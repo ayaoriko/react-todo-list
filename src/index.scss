@@ -1,8 +1,26 @@
 /** Tailwind CSSのリセットCSSのみ利用 **/
 @tailwind base;
 
+$transition-default: all 0.3s ease-in-out;
+
 @function rem($px, $base: 16) {
   @return ($px / $base) * 1rem;
+}
+
+@mixin focusDefault() {
+  &:focus {
+    outline: 1px solid #683A1E;
+  }
+}
+
+@mixin transitionDefault() {
+  transition: all 0.3s ease-in-out;
+
+  @media (min-width: 768px) {
+    &:hover {
+      opacity: 0.5;
+    }
+  }
 }
 
 body {
@@ -13,7 +31,8 @@ body {
 .header-inner,
 .todo-form,
 .todo-box,
-.todo-form-error {
+.todo-form-error,
+.todo-complete-wrapper {
   margin-right: 12px;
   margin-left: 12px;
 
@@ -131,10 +150,8 @@ body {
   border-radius: rem(5);
   padding: .2em 1em;
   border: 1px solid #B0B9C2;
-
-  &:focus {
-    outline: 1px solid #683A1E;
-  }
+  cursor: pointer;
+  @include focusDefault();
 }
 
 .category-button {
@@ -143,11 +160,14 @@ body {
   text-decoration: underline;
   letter-spacing: 0.2em;
   font-weight: 600;
+  @include transitionDefault();
+  @include focusDefault();
 
   @media (min-width: 768px) {
-    margin-top: rem(30);
+    margin-top: rem(16);
     font-size: rem(16);
   }
+
 }
 
 
@@ -160,10 +180,7 @@ body {
   padding: .2em 1em;
   border: 1px solid #B0B9C2;
   letter-spacing: 0.1em;
-
-  &:focus {
-    outline: 1px solid #683A1E;
-  }
+  @include focusDefault();
 
   @media (min-width: 768px) {
     width: 58%;
@@ -187,15 +204,40 @@ body {
     letter-spacing: 0.2em;
   }
 
-  &:focus {
-    outline: 1px solid #683A1E;
-  }
+  @include focusDefault();
+  @include transitionDefault();
 }
 
 .todo-form-error {
   margin-top: rem(24);
   color: #CB3535;
 }
+
+/** 完了済みトグル **/
+
+.todo-complete-wrapper {
+  margin-top: 40px;
+  margin-bottom: -10px;
+  text-align: right;
+  font-size: 14px;
+
+  @media (min-width: 768px) {
+    margin-top: 24px;
+    font-size: 16px;
+    margin-bottom: -20px;
+  }
+}
+
+.todo-complete {
+  @include transitionDefault();
+}
+
+
+.todo-complete svg {
+  display: inline-block;
+  margin-right: 0.5em;
+}
+
 
 /** リスト **/
 
@@ -224,6 +266,21 @@ body {
   }
 }
 
+.todo-box-category-edit-area {
+  font-size: rem(12);
+  margin-top: rem(8);
+
+  @media (min-width: 768px) {
+    font-size: rem(16);
+    margin-top: rem(12);
+  }
+}
+
+.todo-box-category-edit,
+.todo-box-category-delete {
+  @include transitionDefault();
+}
+
 .todo-box-list {
   padding: 0 12px;
   background-color: #FFFCF5;
@@ -234,6 +291,14 @@ body {
 }
 
 .todo-box-list-item {
+  position: relative;
+
+  /*** 編集・削除ボタンの表示制御 **/
+  &:hover .todo-box-list-item-edit-area {
+    opacity: 1;
+    transition: all .3s ease-in-out;
+  }
+
   &:first-child {
     padding-top: 5px;
   }
@@ -243,7 +308,8 @@ body {
   }
 }
 
-.todo-box-list-item label {
+.todo-box-list-item>label,
+.todo-box-list-item>span {
   display: flex;
   cursor: pointer;
   width: 100%;
@@ -304,6 +370,55 @@ body {
   @media (min-width: 768px) {
     margin-left: 24px;
     font-size: rem(24);
-    width: calc(100% - 24px - 30px);
+    width: calc(100% - 24px - 30px - 62px - 62px - rem(14) - rem(14));
   }
+}
+
+/** 編集・削除ボタン **/
+.todo-box-list-item-edit-area {
+  padding-bottom: 22px;
+  display: flex;
+
+  @media (min-width: 768px) {
+    padding-bottom: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    align-items: center;
+  }
+}
+
+.todo-box-list-item-edit,
+.todo-box-list-item-delete {
+  font-size: rem(14);
+  min-width: 62px;
+  background-color: #E38B61;
+  border-radius: rem(5);
+  padding: rem(8) 0;
+  text-align: center;
+  color: #fff;
+  letter-spacing: 0.1em;
+  width: 48%;
+  letter-spacing: 0.2em;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
+
+  @include focusDefault();
+  @include transitionDefault();
+}
+
+.todo-box-list-item-edit {
+  background-color: #F9E0D4;
+  color: #4B3030;
+}
+
+.todo-box-list-item-delete {
+  margin-left: rem(14);
+  background-color: #9D1717;
+  color: #fff;
 }

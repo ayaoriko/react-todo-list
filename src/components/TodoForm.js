@@ -14,8 +14,11 @@ export default function TodoForm({ todos,setTodos,categoryList,setCategoryList }
           }
           }>カテゴリーを追加する</button>
         </div>
-        <input type="text" id="TodoInputText" name="TodoInputText" className="todo-form-input" onChange={(e) => setInputText(e.target.value)} />
-        <button type="button" className="todo-form-submit" onClick={() => addTodoContent(todos,setTodos,inputText,inputSelect,setInputError)}>追加</button>
+        <input type="text" id="TodoInputText" name="TodoInputText" value={inputText} placeholder="やることを入力してください"
+          className="todo-form-input" onChange={(e) => setInputText(e.target.value)} />
+        <button type="button" className="todo-form-submit" onClick={() => {
+          addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError);
+        }}>追加</button>
       </div >
       {inputError === 1 && <p className="todo-form-error   mt-6 text-red-500">未入力の値があります。</p>
       }
@@ -28,7 +31,7 @@ function TodoFormCategorySelect({ categoryList,inputSelect,setInputSelect }) {
     <>
       <select name="category" id="category-select" className="todo-form-select" value={inputSelect}
         onChange={(e) => setInputSelect(e.target.value)}>
-        <option value="">--選択してください--</option>
+        <option value="">カテゴリーを選択してください</option>
         {categoryList.map(ct =>
           <option value={ct} key={ct}>{ct}</option>
         )}
@@ -49,7 +52,7 @@ function AddCategory(categoryList,setCategoryList) {
   }
 }
 
-function addTodoContent(todos,setTodos,inputText,inputSelect,setInputError) {
+function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError) {
   if (inputText === "" || inputSelect === "") {
     setInputError(1);
     return;
@@ -60,6 +63,7 @@ function addTodoContent(todos,setTodos,inputText,inputSelect,setInputError) {
     let maxId = todos.length > 0 ? Math.max(...todos.map(todo => todo.id)) : 0;
     // map ではなく、スプレッド構文で新しいオブジェクトを追加する形することで、後ろに追加される
     setTodos([...todos,{ id: maxId + 1,name: inputText,category: inputSelect,isCheck: false }]);
+    setInputText("");
   }
 }
 
