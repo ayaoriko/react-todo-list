@@ -7,9 +7,11 @@ $transition-default: all 0.3s ease-in-out;
   @return ($px / $base) * 1rem;
 }
 
+$focus-color: #683A1E;
+
 @mixin focusDefault() {
   &:focus {
-    outline: 1px solid #683A1E;
+    outline: 1px solid $focus-color;
   }
 }
 
@@ -35,6 +37,8 @@ body {
 .todo-complete-wrapper {
   margin-right: 12px;
   margin-left: 12px;
+  z-index: 9999;
+  position: relative;
 
   @media (min-width: 1400px) {
     max-width: 1300px;
@@ -64,6 +68,11 @@ body {
 
   &-inner {
     transform: scaleY(-1);
+    text-align: center;
+    background: #795548;
+    color: #fff;
+    font-size: 12px;
+    padding: .5em;
   }
 
   height: 10vh;
@@ -151,6 +160,7 @@ body {
   padding: .2em 1em;
   border: 1px solid #B0B9C2;
   cursor: pointer;
+  color: #4b3a30;
   @include focusDefault();
 }
 
@@ -176,10 +186,11 @@ body {
   height: 58px;
   font-size: rem(18);
   border-radius: rem(5);
-  max-width: 745px;
   padding: .2em 1em;
   border: 1px solid #B0B9C2;
   letter-spacing: 0.1em;
+  max-width: 745px;
+  color: #4b3a30;
   @include focusDefault();
 
   @media (min-width: 768px) {
@@ -264,6 +275,15 @@ body {
     padding: rem(16);
     letter-spacing: 0.2em;
   }
+}
+
+.todo-box-category input {
+  border-radius: rem(5);
+  padding: .2em .5em;
+  border: 1px solid #B0B9C2;
+  letter-spacing: 0.1em;
+  color: #4b3a30;
+  @include focusDefault();
 }
 
 .todo-box-category-edit-area {
@@ -372,6 +392,15 @@ body {
     font-size: rem(24);
     width: calc(100% - 24px - 30px - 62px - 62px - rem(14) - rem(14));
   }
+}
+
+.todo-box-list-item-label input {
+  border-radius: rem(5);
+  padding: .2em .5em;
+  border: 1px solid #B0B9C2;
+  letter-spacing: 0.1em;
+  color: #4b3a30;
+  @include focusDefault();
 }
 
 /** 編集・削除ボタン **/

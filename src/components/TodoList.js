@@ -1,28 +1,46 @@
 import { useState } from 'react';
 
-export default function TodoList({ todos,setTodos,categoryList }) {
+export default function TodoList({ todos,setTodos,categoryList,setCategoryList }) {
     const [showCompleteList,setShowCompleteList] = useState(true);
+    // { カテゴリーID: true or false } の形で編集モードかどうかを管理
+    const [categoryMap,setCategoryMap] = useState({});
+    // 完了済みを非表示にする場合、todosから完了済みを除外する
     let notCompleteTodos = todos.filter(todo => todo.isCheck === false);
     if (!showCompleteList) {
         todos = notCompleteTodos;
     }
-    let lastItemCount = 0;
     return (
         <>
+            {/* 完了済みを非表示/表示するボタン */}
             <ShowCompleteButton showCompleteList={showCompleteList} setShowCompleteList={setShowCompleteList} />
+
             {categoryList.map(cat => {
-                lastItemCount = todos.filter(todo => todo.category === cat && !todo.isCheck).length;
+                // そのカテゴリーに属する、未完了のTodoの数を数える
+                const lastItemCount = todos.filter(todo => todo.category === cat.id && !todo.isCheck).length;
+
+                // 「未分類」カテゴリーで、かつ、未完了のTodoが0件の場合は表示しない
+                if (cat.id === 0 && lastItemCount === 0) {
+                    return null;
+                }
+
+                // 完了済みを非表示にしていて、かつ、そのカテゴリーに未完了のTodoが0件の場合は表示しない
+                if (showCompleteList === false && lastItemCount === 0) {
+                    return null
+                }
+                // 編集モードかどうかを判定
+                // editCategoryMap[cat.id] は存在しなければ undefined、存在すれば true か false が入るので、
+                // !! をつけてundefinedの時にfalseになるようにしている
+                const isEdit = !!categoryMap[cat.id];
+
                 return (
-                    <div className="todo-box" key={cat}>
-                        <div className="todo-box-category">{cat}（残り{lastItemCount}）
-                            <div className="todo-box-category-edit-area">
-                                <button className="todo-box-category-edit">編集</button> |
-                                <button className="todo-box-category-delete">削除</button>
-                            </div>
-                        </div>
+                    <div className="todo-box" key={cat.id}>
+                        <div className="todo-box-category">{isEdit ? <input id={'todo-box-category-' + cat.id} value={cat.name} onChange={(e) => setCategoryList(categoryList.map(c => c.id === cat.id ? { ...c,name: e.target.value } : c))} /> : cat.name}{!isEdit && <span>（残り{lastItemCount}）</span>}
+                            <TodoBoxCategoryEditArea cat={cat} categoryList={categoryList} setCategoryList={setCategoryList} setTodos={setTodos} setCategoryMap={setCategoryMap} isEdit={isEdit} />
+                        </div >
                         <ul className="todo-box-list">
+                            {/* Todoが1件もない場合は、「完了しました！」と表示する */}
                             {lastItemCount > 0 || showCompleteList ?
-                                <TodoBox todos={todos} setTodos={setTodos} category={cat} />
+                                <TodoBoxList todos={todos} setTodos={setTodos} categoryId={cat.id} />
                                 :
                                 !showCompleteList && <li className="todo-box-list-item"><span>完了しました！</span></li>
                             }
@@ -35,33 +53,35 @@ export default function TodoList({ todos,setTodos,categoryList }) {
     );
 }
 
-function TodoBox({ todos,setTodos,category }) {
-    let CategoryTodos = todos.filter((todo) => todo.category === category);
+function TodoBoxCategoryEditArea({ cat,setCategoryList,setTodos,setCategoryMap,isEdit }) {
     return (
-        <>
-            {CategoryTodos.map(ct =>
-                <li className="todo-box-list-item" key={ct.id}>
-                    <label htmlFor={ct.id}>
-                        <input type="checkbox" id={ct.id} checked={ct.isCheck} className="todo-box-checkbox" onChange={() => {
-                            setTodos(prev =>
-                                prev.map(todo =>
-                                    todo.id === ct.id ? { ...todo,isCheck: !todo.isCheck } : todo
-                                )
-                            );
-                        }}
-                        />
-                        <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="#4B3A30"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z" /></svg>
-                        <span className="todo-box-list-item-label">{ct.name}</span>
-                    </label>
-                    <div className="todo-box-list-item-edit-area">
-                        <button className="todo-box-list-item-edit">編集</button>
-                        <button className="todo-box-list-item-delete">削除</button>
-                    </div>
-                </li>
-            )}
-        </>
-    );
+        <div className="todo-box-category-edit-area">
+            <button className="todo-box-category-edit" onClick={() =>
+                setCategoryMap(prev => ({
+                    ...prev,
+                    [cat.id]: !prev[cat.id] // トグル
+                }))
+            }>{isEdit ? '保存' : '編集'} </button>
+            {!isEdit && <span className="separator"> | </span>}
+            {!isEdit &&
+                <button className="todo-box-category-delete"
+                    onClick={() => {
+                        if (window.confirm("本当に削除しますか？残ったタスクは「未分類」カテゴリーに移動します。")) {
+                            setCategoryList(prev => prev.filter(t => t.id !== cat.id));
+                            if (cat.id !== 0) {
+                                // カテゴリー削除時に、そのカテゴリーに属するTodoを「未分類」に変更する
+                                setTodos(prev => prev.map(todo => todo.category === cat.id ? { ...todo,category: 0 } : todo));
+                            } else {
+                                alert("「未分類」カテゴリーは削除できません。");
+                            }
+                        }
+                    }}>削除</button>
+            }
+        </div >
+    )
 }
+
+// 完了済みを非表示/表示するボタン
 function ShowCompleteButton({ showCompleteList,setShowCompleteList }) {
     return (
         <div className="todo-complete-wrapper">
@@ -73,4 +93,63 @@ function ShowCompleteButton({ showCompleteList,setShowCompleteList }) {
                 {showCompleteList ? '完了済みを隠す' : '完了済みを表示'}</button>
         </div>
     );
+}
+
+// Todoのリスト部分
+function TodoBoxList({ todos,setTodos,categoryId }) {
+    let CategoryTodos = todos.filter((todo) => todo.category === categoryId);
+    return (
+        <>
+            {CategoryTodos.map(todoItem =>
+                <TodoBoxListItem key={todoItem.id} todoItem={todoItem} setTodos={setTodos} />
+            )}
+        </>
+    );
+}
+
+// Todoのリスト部分の各アイテム
+// 子コンポーネントに分割して、useState を局所的に持たせることで、
+// 各Todoごとに個別の state を持てるようにする
+function TodoBoxListItem({ todoItem,setTodos }) {
+    const [isEditTodoItem,setIsEditTodoItem] = useState(false);
+    const [todoText,setTodoText] = useState(todoItem.name);
+    return (
+        <li className="todo-box-list-item" key={todoItem.id}>
+            <label htmlFor={'todo-item-' + todoItem.id}>
+                <input type="checkbox" id={'todo-item-' + todoItem.id} checked={todoItem.isCheck} className="todo-box-checkbox" onChange={() => {
+                    setTodos(prev =>
+                        prev.map(todo =>
+                            todo.id === todoItem.id ? { ...todo,isCheck: !todo.isCheck } : todo
+                        )
+                    );
+                }}
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px" fill="#4B3A30"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z" /></svg>
+                <span className="todo-box-list-item-label">{isEditTodoItem ?
+                    <input Id={'todo-item-' + todoItem.id + '-input'} value={todoText} onChange={(e) => setTodoText(e.target.value)}
+                    /> : todoItem.name}</span>
+            </label>
+            <div className="todo-box-list-item-edit-area">
+                <button className="todo-box-list-item-edit"
+                    onClick={() => {
+                        if (isEditTodoItem) {
+                            // 現在のtodosの値（配列）をprevとして受け取り、新しい配列を返す
+                            setTodos(prev =>
+                                prev.map(t =>
+                                    t.id === todoItem.id ? { ...t,name: todoText } : t
+                                )
+                            );
+                        }
+                        setIsEditTodoItem(prev => !prev);
+                    }}>{isEditTodoItem ? '確定' : '編集'} </button>
+                <button className="todo-box-list-item-delete"
+                    onClick={() => {
+                        if (window.confirm("本当に削除しますか？")) {
+                            setTodos(prev => prev.filter(t => t.id !== todoItem.id));
+                        }
+                    }}
+                >削除</button>
+            </div>
+        </li>
+    )
 }
