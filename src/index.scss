@@ -94,8 +94,8 @@ body {
   letter-spacing: 0.1em;
 
   @media (min-width: 768px) {
-    padding-top: rem(190);
-    font-size: rem(98);
+    padding-top: rem(130);
+    font-size: rem(82);
   }
 
   @media (max-width: 374px) {
@@ -113,8 +113,8 @@ body {
   line-height: 1.5;
 
   @media (min-width: 768px) {
-    font-size: rem(28);
-    padding-top: rem(60);
+    font-size: rem(18);
+    padding-top: rem(20);
     letter-spacing: 0.2em;
     line-height: 2;
   }
@@ -135,7 +135,7 @@ body {
   gap: rem(20);
 
   @media (min-width: 768px) {
-    margin-top: rem(70);
+    margin-top: rem(48);
     flex-flow: unset;
     justify-content: space-between;
     gap: 2%;
@@ -161,6 +161,7 @@ body {
   border: 1px solid #B0B9C2;
   cursor: pointer;
   color: #4b3a30;
+  letter-spacing: 0.1em;
   @include focusDefault();
 }
 
@@ -256,7 +257,7 @@ body {
   margin-top: rem(38);
 
   @media (min-width: 768px) {
-    margin-top: rem(60);
+    margin-top: rem(40);
   }
 }
 
@@ -271,7 +272,7 @@ body {
   letter-spacing: 0.1em;
 
   @media (min-width: 768px) {
-    font-size: rem(24);
+    font-size: rem(22);
     padding: rem(16);
     letter-spacing: 0.2em;
   }
@@ -291,7 +292,7 @@ body {
   margin-top: rem(8);
 
   @media (min-width: 768px) {
-    font-size: rem(16);
+    font-size: rem(14);
     margin-top: rem(12);
   }
 }
