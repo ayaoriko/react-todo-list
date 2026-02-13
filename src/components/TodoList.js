@@ -1,4 +1,4 @@
-import { useState,createRef,useRef,} from 'react';
+import { useState } from 'react';
 import { CSSTransition,TransitionGroup } from 'react-transition-group';
 import { supabase } from '../supabase';
 
@@ -231,7 +231,6 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                 {
                     <button className={`todo-box-list-item-delete ${isEditTodoItem ? 'hidden' : ''}`}
                         onClick={async () => {
-                            {/* onClick を async にする*/ }
                             if (window.confirm("本当に削除しますか？")) {
                                 // setTodos の前に Supabase の delete を呼ぶ
                                 const { error } = await supabase.from('todos').delete().eq('id',todoItem.id);
