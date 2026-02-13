@@ -25,6 +25,7 @@ export default function App() {
     }
   });
 
+
   /** 1行で書くと
    * const allCategories = Array.from(new Set(initialTodos.map(todo => todo.category))); 
    ***/
@@ -36,6 +37,14 @@ export default function App() {
   const [categoryList,setCategoryList] = useState(initialCategoryList);
   // 追加したTodoのIDを保存するstate
   const [lastAddedId,setLastAddedId] = useState(null);
+
+  // カテゴリーもtodoRefsと同様にrefを管理する
+  const categoryRefs = useRef({});
+  categoryList.forEach(cat => {
+    if (!categoryRefs.current[cat.id]) {
+      categoryRefs.current[cat.id] = createRef();
+    }
+  });
 
   // これを使って、追加したTodoまでスクロールする
   // useRef(null)で初期化したlastAddedRef 
@@ -54,7 +63,7 @@ export default function App() {
     <div className="root-inner">
       <Header />
       <TodoForm todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} setLastAddedId={setLastAddedId} />
-      <TodoList todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs.current} />
+      <TodoList todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs.current} categoryRefs={categoryRefs.current} />
       <Footer />
     </div>
   );

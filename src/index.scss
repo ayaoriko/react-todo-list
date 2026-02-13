@@ -313,13 +313,12 @@ body {
 
 .todo-box-list {
   padding: 0;
-  background-color: #FFFCF5;
-
 }
 
 .todo-box-list-item {
   position: relative;
   padding: 0 12px;
+  background-color: #FFFCF5;
 
   /*** 編集・削除ボタンの表示制御 **/
   &:hover .todo-box-list-item-edit-area {
@@ -489,7 +488,7 @@ body {
 }
 
 .blink {
-  animation: blink .5s infinite;
+  animation: blink 1s infinite;
 }
 
 /** react-transition-groupでのフェードイン・フェードアウトアニメーション **/
@@ -499,5 +498,5 @@ body {
 
 .fade-exit-active {
   opacity: 0;
-  transition: opacity 1s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
 }

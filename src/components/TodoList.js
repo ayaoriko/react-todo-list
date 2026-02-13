@@ -1,7 +1,7 @@
 import { useState,createRef,useRef,} from 'react';
 import { CSSTransition,TransitionGroup } from 'react-transition-group';
 
-export default function TodoList({ todos,setTodos,categoryList,setCategoryList,lastAddedId,lastAddedRef,todoRefs }) {
+export default function TodoList({ todos,setTodos,categoryList,setCategoryList,lastAddedId,lastAddedRef,todoRefs,categoryRefs }) {
     const [showCompleteList,setShowCompleteList] = useState(true);
     // { カテゴリーID: true or false } の形で編集モードかどうかを管理
     const [categoryMap,setCategoryMap] = useState({});
@@ -14,42 +14,45 @@ export default function TodoList({ todos,setTodos,categoryList,setCategoryList,l
         <>
             {/* 完了済みを非表示/表示するボタン */}
             <ShowCompleteButton showCompleteList={showCompleteList} setShowCompleteList={setShowCompleteList} />
+            <TransitionGroup component={null}>
+                {categoryList.map(cat => {
+                    // そのカテゴリーに属する、未完了のTodoの数を数える
+                    const lastItemCount = todos.filter(todo => todo.category === cat.id && !todo.isCheck).length;
 
-            {categoryList.map(cat => {
-                // そのカテゴリーに属する、未完了のTodoの数を数える
-                const lastItemCount = todos.filter(todo => todo.category === cat.id && !todo.isCheck).length;
+                    // 「未分類」カテゴリーで、かつ、未完了のTodoが0件の場合は表示しない
+                    if (cat.id === 0 && lastItemCount === 0) {
+                        return null;
+                    }
 
-                // 「未分類」カテゴリーで、かつ、未完了のTodoが0件の場合は表示しない
-                if (cat.id === 0 && lastItemCount === 0) {
-                    return null;
+                    // 完了済みを非表示にしていて、かつ、そのカテゴリーに未完了のTodoが0件の場合は表示しない
+                    if (showCompleteList === false && lastItemCount === 0) {
+                        return null
+                    }
+                    // 編集モードかどうかを判定
+                    // editCategoryMap[cat.id] は存在しなければ undefined、存在すれば true か false が入るので、
+                    // !! をつけてundefinedの時にfalseになるようにしている
+                    const isEdit = !!categoryMap[cat.id];
+
+                    return (
+                        <CSSTransition key={cat.id} timeout={300} classNames="fade" nodeRef={categoryRefs[cat.id]}>
+                            <div className="todo-box" ref={categoryRefs[cat.id]}>
+                                <div className="todo-box-category">{isEdit ? <input id={'todo-box-category-' + cat.id} value={cat.name} onChange={(e) => setCategoryList(categoryList.map(c => c.id === cat.id ? { ...c,name: e.target.value } : c))} /> : cat.name}{!isEdit && <span>（残り{lastItemCount}）</span>}
+                                    <TodoBoxCategoryEditArea cat={cat} categoryList={categoryList} setCategoryList={setCategoryList} setTodos={setTodos} setCategoryMap={setCategoryMap} isEdit={isEdit} />
+                                </div >
+                                <ul className="todo-box-list">
+                                    {/* Todoが1件もない場合は、「完了しました！」と表示する */}
+                                    {lastItemCount > 0 || showCompleteList ?
+                                        <TodoBoxList todos={todos} setTodos={setTodos} categoryId={cat.id} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs} />
+                                        :
+                                        !showCompleteList && <li className="todo-box-list-item"><span>完了しました！</span></li>
+                                    }
+                                </ul>
+                            </div>
+                        </CSSTransition>
+                    )
                 }
-
-                // 完了済みを非表示にしていて、かつ、そのカテゴリーに未完了のTodoが0件の場合は表示しない
-                if (showCompleteList === false && lastItemCount === 0) {
-                    return null
-                }
-                // 編集モードかどうかを判定
-                // editCategoryMap[cat.id] は存在しなければ undefined、存在すれば true か false が入るので、
-                // !! をつけてundefinedの時にfalseになるようにしている
-                const isEdit = !!categoryMap[cat.id];
-
-                return (
-                    <div className="todo-box" key={cat.id}>
-                        <div className="todo-box-category">{isEdit ? <input id={'todo-box-category-' + cat.id} value={cat.name} onChange={(e) => setCategoryList(categoryList.map(c => c.id === cat.id ? { ...c,name: e.target.value } : c))} /> : cat.name}{!isEdit && <span>（残り{lastItemCount}）</span>}
-                            <TodoBoxCategoryEditArea cat={cat} categoryList={categoryList} setCategoryList={setCategoryList} setTodos={setTodos} setCategoryMap={setCategoryMap} isEdit={isEdit} />
-                        </div >
-                        <ul className="todo-box-list">
-                            {/* Todoが1件もない場合は、「完了しました！」と表示する */}
-                            {lastItemCount > 0 || showCompleteList ?
-                                <TodoBoxList todos={todos} setTodos={setTodos} categoryId={cat.id} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs} />
-                                :
-                                !showCompleteList && <li className="todo-box-list-item"><span>完了しました！</span></li>
-                            }
-                        </ul>
-                    </div>
-                )
-            }
-            )}
+                )}
+            </TransitionGroup>
         </>
     );
 }
@@ -104,7 +107,7 @@ function TodoBoxList({ todos,setTodos,categoryId,lastAddedId,lastAddedRef,todoRe
     return (
         <TransitionGroup component={null}>
             {CategoryTodos.map(todoItem => (
-                <CSSTransition key={todoItem.id} timeout={1000} classNames="fade" nodeRef={todoRefs[todoItem.id]}>
+                <CSSTransition key={todoItem.id} timeout={300} classNames="fade" nodeRef={todoRefs[todoItem.id]}>
                     <TodoBoxListItem todoItem={todoItem} setTodos={setTodos} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} nodeRef={todoRefs[todoItem.id]} />
                 </CSSTransition>
             ))}
@@ -119,8 +122,16 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
     const [todoText,setTodoText] = useState(todoItem.name);
     return (
         // 追加したTodoにだけblinkクラスを付ける
-        // lastAddedRef：liをDOMに配置した瞬間にlastAddedRef.currentにそのDOM要素が入ります。（App.js参照）
-        <li ref={nodeRef} className={`todo-box-list-item ${todoItem.id === lastAddedId ? "blink" : ""}`}>
+        // nodeRef:react-transition-groupのアニメーション用のref
+        // lastAddedRef:追加したTodoまでスクロールするためのref
+        // Reactではrefに1つしか渡せないため、nodeRefとlastAddedRefの2つをまとめてliに渡している
+        // elにはliのDOM要素が入り、nodeRef.currentとlastAddedRef.currentの両方に代入することでアニメーション用のrefとスクロール用のrefを同時に機能させている
+        <li ref={(el) => {
+            nodeRef.current = el;
+            if (todoItem.id === lastAddedId && lastAddedRef) {
+                lastAddedRef.current = el;
+            }
+        }} className={`todo-box-list-item ${todoItem.id === lastAddedId ? "blink" : ""}`}>
             <label htmlFor={'todo-item-' + todoItem.id}>
                 {/* 編集モードでなければチェックボックスを表示 */}
                 {!isEditTodoItem && <>

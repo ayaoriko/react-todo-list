@@ -34,7 +34,7 @@ export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,s
         {/* button type="submit の動作は、formタグのonSubmitで指定する*/}
         <button type="submit" className="todo-form-submit">追加</button>
       </form>
-      {inputError === 1 && <p className="todo-form-error   mt-6 text-red-500">未入力の値があります。</p>
+      {inputError === 1 && <p className="todo-form-error   mt-6 text-red-500">リストに追加するテキストを指定してください。</p>
       }
     </>
   );
