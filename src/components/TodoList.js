@@ -1,31 +1,37 @@
 import { useState,createRef,useRef,} from 'react';
 import { CSSTransition,TransitionGroup } from 'react-transition-group';
+import { supabase } from '../supabase';
 
 export default function TodoList({ todos,setTodos,categoryList,setCategoryList,lastAddedId,lastAddedRef,todoRefs,categoryRefs }) {
     const [showCompleteList,setShowCompleteList] = useState(true);
     // { カテゴリーID: true or false } の形で編集モードかどうかを管理
     const [categoryMap,setCategoryMap] = useState({});
     // 完了済みを非表示にする場合、todosから完了済みを除外する
-    let notCompleteTodos = todos.filter(todo => todo.isCheck === false);
-    if (!showCompleteList) {
-        todos = notCompleteTodos;
-    }
+    // フィルタリングは TodoBoxList の中でやるようになったので、ここでは削除
+    // let notCompleteTodos = todos.filter(todo => todo.isCheck === false);
+    //if (!showCompleteList) {
+    //    todos = notCompleteTodos;
+    //}
     return (
         <>
             {/* 完了済みを非表示/表示するボタン */}
             <ShowCompleteButton showCompleteList={showCompleteList} setShowCompleteList={setShowCompleteList} />
             <TransitionGroup component={null}>
                 {categoryList.map(cat => {
-                    // そのカテゴリーに属する、未完了のTodoの数を数える
-                    const lastItemCount = todos.filter(todo => todo.category === cat.id && !todo.isCheck).length;
 
-                    // 「未分類」カテゴリーで、かつ、未完了のTodoが0件の場合は表示しない
-                    if (cat.id === 0 && lastItemCount === 0) {
+                    // そのカテゴリーに属する、Todoの数を数える
+                    const otherItemCount = todos.filter(todo => todo.category_id === cat.id).length;
+
+                    // 「未分類」カテゴリーで、かつ、Todoが0件の場合は表示しない
+                    if (cat.id === 0 && otherItemCount === 0) {
                         return null;
                     }
 
+                    // そのカテゴリーに属する、未完了のTodoの数を数える
+                    const lastCheckItemCount = todos.filter(todo => todo.category_id === cat.id && !todo.isCheck).length;
+
                     // 完了済みを非表示にしていて、かつ、そのカテゴリーに未完了のTodoが0件の場合は表示しない
-                    if (showCompleteList === false && lastItemCount === 0) {
+                    if (showCompleteList === false && lastCheckItemCount === 0) {
                         return null
                     }
                     // 編集モードかどうかを判定
@@ -36,13 +42,13 @@ export default function TodoList({ todos,setTodos,categoryList,setCategoryList,l
                     return (
                         <CSSTransition key={cat.id} timeout={300} classNames="fade" nodeRef={categoryRefs[cat.id]}>
                             <div className="todo-box" ref={categoryRefs[cat.id]}>
-                                <div className="todo-box-category">{isEdit ? <input id={'todo-box-category-' + cat.id} value={cat.name} onChange={(e) => setCategoryList(categoryList.map(c => c.id === cat.id ? { ...c,name: e.target.value } : c))} /> : cat.name}{!isEdit && <span>（残り{lastItemCount}）</span>}
+                                <div className="todo-box-category">{isEdit ? <input id={'todo-box-category-' + cat.id} value={cat.name} onChange={(e) => setCategoryList(categoryList.map(c => c.id === cat.id ? { ...c,name: e.target.value } : c))} /> : cat.name}{!isEdit && <span>（残り{lastCheckItemCount}）</span>}
                                     <TodoBoxCategoryEditArea cat={cat} categoryList={categoryList} setCategoryList={setCategoryList} setTodos={setTodos} setCategoryMap={setCategoryMap} isEdit={isEdit} />
                                 </div >
                                 <ul className="todo-box-list">
                                     {/* Todoが1件もない場合は、「完了しました！」と表示する */}
-                                    {lastItemCount > 0 || showCompleteList ?
-                                        <TodoBoxList todos={todos} setTodos={setTodos} categoryId={cat.id} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs} />
+                                    {lastCheckItemCount > 0 || showCompleteList ?
+                                        <TodoBoxList todos={todos} setTodos={setTodos} categoryId={cat.id} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs} showCompleteList={showCompleteList} />
                                         :
                                         !showCompleteList && <li className="todo-box-list-item"><span>完了しました！</span></li>
                                     }
@@ -60,24 +66,51 @@ export default function TodoList({ todos,setTodos,categoryList,setCategoryList,l
 function TodoBoxCategoryEditArea({ cat,setCategoryList,setTodos,setCategoryMap,isEdit }) {
     return (
         <div className="todo-box-category-edit-area">
-            <button className="todo-box-category-edit" onClick={() =>
+            <button className="todo-box-category-edit" onClick={async () => {
+                if (isEdit) {
+                    const { error } = await supabase
+                        .from('categories')
+                        .update({ name: cat.name })
+                        .eq('id',cat.id);
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+                }
                 setCategoryMap(prev => ({
                     ...prev,
-                    [cat.id]: !prev[cat.id] // トグル
-                }))
-            }>{isEdit ? '保存' : '編集'} </button>
+                    [cat.id]: !prev[cat.id] // トグル式に切り替え
+                }));
+            }}>{isEdit ? '保存' : '編集'}</button>
             {!isEdit && <span className="separator"> | </span>}
             {!isEdit &&
                 <button className="todo-box-category-delete"
-                    onClick={() => {
+                    onClick={async () => {
                         if (window.confirm("本当に削除しますか？残ったタスクは「未分類」カテゴリーに移動します。")) {
-                            setCategoryList(prev => prev.filter(t => t.id !== cat.id));
-                            if (cat.id !== 0) {
-                                // カテゴリー削除時に、そのカテゴリーに属するTodoを「未分類」に変更する
-                                setTodos(prev => prev.map(todo => todo.category === cat.id ? { ...todo,category: 0 } : todo));
-                            } else {
+                            if (cat.id === 0) {
                                 alert("「未分類」カテゴリーは削除できません。");
+                                return;
                             }
+                            // そのカテゴリーに属するTodoをまず「未分類」に移動する
+                            const { error: updateError } = await supabase
+                                .from('todos')
+                                .update({ category_id: 0 })
+                                .eq('category_id',cat.id);
+                            if (updateError) {
+                                console.error(updateError);
+                                return;
+                            }
+                            // カテゴリーを削除する
+                            const { error: deleteError } = await supabase
+                                .from('categories')
+                                .delete()
+                                .eq('id',cat.id);
+                            if (deleteError) {
+                                console.error(deleteError);
+                                return;
+                            }
+                            setCategoryList(prev => prev.filter(t => t.id !== cat.id));
+                            setTodos(prev => prev.map(todo => todo.category_id === cat.id ? { ...todo,category_id: 0 } : todo));
                         }
                     }}>削除</button>
             }
@@ -100,8 +133,14 @@ function ShowCompleteButton({ showCompleteList,setShowCompleteList }) {
 }
 
 // Todoのリスト部分
-function TodoBoxList({ todos,setTodos,categoryId,lastAddedId,lastAddedRef,todoRefs }) {
-    let CategoryTodos = todos.filter((todo) => todo.category === categoryId);
+function TodoBoxList({ todos,setTodos,categoryId,lastAddedId,lastAddedRef,todoRefs,showCompleteList }) {
+    let CategoryTodos = todos.filter((todo) => todo.category_id === categoryId);
+
+    // 完了済みを非表示にする場合、todosから完了済みを除外する
+    if (!showCompleteList) {
+        CategoryTodos = CategoryTodos.filter(todo => !todo.isCheck);
+    }
+
     // react-transition-groupのライブラリを使って、Todoの追加・削除時にフェードイン・フェードアウトのアニメーションをつける
     // React 19とreact-transition-groupの相性問題で、nodeRefを渡す必要がある
     return (
@@ -135,13 +174,16 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
             <label htmlFor={'todo-item-' + todoItem.id}>
                 {/* 編集モードでなければチェックボックスを表示 */}
                 {!isEditTodoItem && <>
-                    <input type="checkbox" id={'todo-item-' + todoItem.id} checked={todoItem.isCheck} className="todo-box-checkbox" onChange={() => {
+                    {/* DBを参照するのでasync () を追加 */}
+                    <input type="checkbox" id={'todo-item-' + todoItem.id} checked={todoItem.isCheck} className="todo-box-checkbox" onChange={async () => {
                         if (!todoItem.isCheck) {
                             setTodos(prev =>
                                 prev.map(todo =>
                                     todo.id === todoItem.id ? { ...todo,isExiting: true } : todo
                                 )
                             );
+                            // Supabaseのis_checkをtrueに更新する
+                            await supabase.from('todos').update({ is_check: true }).eq('id',todoItem.id);
                             setTimeout(() => {
                                 setTodos(prev =>
                                     prev.map(todo =>
@@ -150,6 +192,8 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                                 );
                             },300);
                         } else {
+                            // Supabaseのis_checkをfalseに更新する
+                            await supabase.from('todos').update({ is_check: false }).eq('id',todoItem.id);
                             setTodos(prev =>
                                 prev.map(todo =>
                                     todo.id === todoItem.id ? { ...todo,isCheck: false } : todo
@@ -167,12 +211,14 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
             </label>
             <div className="todo-box-list-item-edit-area">
                 <button className="todo-box-list-item-edit"
-                    onClick={() => {
+                    onClick={async () => {
                         if (isEditTodoItem) {
                             if (!todoText) {
                                 alert("Todoの内容を空にすることはできません。");
                                 return;
                             }
+                            // Supabaseのnameを更新する
+                            await supabase.from('todos').update({ name: todoText }).eq('id',todoItem.id);
                             setTodos(prev =>
                                 prev.map(t =>
                                     t.id === todoItem.id ? { ...t,name: todoText } : t
@@ -184,8 +230,16 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                 {/* 編集モードでなければ削除ボタンを表示 */}
                 {
                     <button className={`todo-box-list-item-delete ${isEditTodoItem ? 'hidden' : ''}`}
-                        onClick={() => {
+                        onClick={async () => {
+                            {/* onClick を async にする*/ }
                             if (window.confirm("本当に削除しますか？")) {
+                                // setTodos の前に Supabase の delete を呼ぶ
+                                const { error } = await supabase.from('todos').delete().eq('id',todoItem.id);
+                                if (error) {
+                                    // エラーが返ってきたら setTodos は実行しないようにする
+                                    console.error(error);
+                                    return;
+                                }
                                 setTodos(prev => prev.filter(t => t.id !== todoItem.id));
                             }
                         }}

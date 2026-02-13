@@ -5,13 +5,39 @@ import TodoForm from './components/TodoForm';
 import TodoList from './components/TodoList';
 import Footer from './components/Footer';
 
-import initialTodos from "./data/TodoList.json";
-import initialCategoryList from "./data/TodoCategory.json";
+// supabaseからデータを取得するため、JSONデータのインポートはコメントアウト
+
+//import initialTodos from "./data/TodoList.json";
+//import initialCategoryList from "./data/TodoCategory.json";
+
+// supabaseからデータを取得するため、supabase.jsをインポート
+import { supabase } from './supabase';
 
 export default function App() {
   // チェックの有無を管理するために、initialTodosの配列にisCheck: falseを追加する
   // useStateのtodosは「データとしてのTodoリスト」
-  const [todos,setTodos] = useState(initialTodos.map(todo => ({ ...todo,isCheck: false })));
+  // supabaseからデータを取得するため、useStateの初期値を空配列に変更するためコメントアウト
+  //const [todos,setTodos] = useState(initialTodos.map(todo => ({ ...todo,isCheck: false })));
+
+  // supabaseからデータを取得するため、useStateの初期値を空配列に変更する
+  const [todos,setTodos] = useState([]);
+  const [categoryList,setCategoryList] = useState([]);
+
+  // 追加したTodoのIDを保存するstate
+  const [lastAddedId,setLastAddedId] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: categoryData } = await supabase.from('categories').select('*');
+      const { data: todoData } = await supabase.from('todos').select('*');
+      setCategoryList(categoryData);
+      // SupabaseはDBの慣習でスネークケース（is_check）、Reactはキャメルケース（isCheck）になっている
+      // Supabaseのカラムのスネークのからキャメルケースに変換する
+      setTodos(todoData.map(todo => ({ ...todo,isCheck: todo.is_check })));
+    };
+    fetchData();
+  },[]);
+
 
   // todoRefsはDOM要素としてのTodoリスト」
   // 最初の1回しかアニメーションが効かない問題を解決するために、useRef({})で作ったtodoRefsに一度作ったrefを保存しておくことで、毎回新しいrefが作られないようにする
@@ -34,9 +60,9 @@ export default function App() {
   /** new Set(...) で重複を削除 **/
   /** Array.from(...) で もう一度「配列として扱える形」に戻す **/
   // allCategories = Array.from(new Set(allCategories));
-  const [categoryList,setCategoryList] = useState(initialCategoryList);
-  // 追加したTodoのIDを保存するstate
-  const [lastAddedId,setLastAddedId] = useState(null);
+  // supabaseからデータを取得するため、useStateの初期値を空配列に変更するためコメントアウト
+  // const [categoryList,setCategoryList] = useState(initialCategoryList);
+
 
   // カテゴリーもtodoRefsと同様にrefを管理する
   const categoryRefs = useRef({});

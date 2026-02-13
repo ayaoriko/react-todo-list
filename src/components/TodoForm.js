@@ -1,14 +1,17 @@
 import { useState,useEffect,useRef,createRef } from 'react';
+import { supabase } from '../supabase';
 export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,setLastAddedId }) {
   const [inputText,setInputText] = useState("");
-  const [inputSelect,setInputSelect] = useState("");
+  const [inputSelect,setInputSelect] = useState(0);
   const [inputError,setInputError] = useState(0);
 
   // フォームの送信ボタンが押されたときの動作
-  const handleSubmit = (e) => {
+  // supbaseを利用するにあたりhandleSubmitもasync/awaitに変更が必要
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // addTodoContentの戻り値として新しく追加したTodoのIDが返ってくる
-    const newId = addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError);
+    // supbaseのデータを待つので、addTodoContentの呼び出しにawaitが必要
+    const newId = await addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError);
 
     // 追加した瞬間にblinkクラスを付けて、2秒後に外す挙動
     if (newId) {
@@ -24,10 +27,11 @@ export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,s
       <form id="TodoForm" className="todo-form" onSubmit={handleSubmit}>
         <div className="todo-category">
           <TodoFormCategorySelect categoryList={categoryList} inputSelect={inputSelect} setInputSelect={setInputSelect} />
-          <button className="category-button" type="button" onClick={() => {
-            AddCategory(categoryList,setCategoryList,setInputSelect);
-          }
-          }>カテゴリーを追加する</button>
+          {/*呼び出し側のボタンも async に変える*/}
+          <button className="category-button" type="button" onClick={async () => {
+            await AddCategory(categoryList,setCategoryList,setInputSelect);
+          }}
+          >カテゴリーを追加する</button>
         </div>
         <input type="text" id="TodoInputText" name="TodoInputText" value={inputText} placeholder="やることを入力してください"
           className="todo-form-input" onChange={(e) => setInputText(e.target.value)} />
@@ -56,31 +60,58 @@ function TodoFormCategorySelect({ categoryList,inputSelect,setInputSelect }) {
 }
 
 // カテゴリーを追加するボタンの動作
-function AddCategory(categoryList,setCategoryList,setInputSelect) {
+async function AddCategory(categoryList,setCategoryList,setInputSelect) {
   const userInput = prompt("カテゴリー名を入力してください");
   if (userInput) {
-    let maxId = categoryList.length > 0 ? Math.max(...categoryList.map(todo => todo.id)) : 0;
-    const newList = [...categoryList,{ id: maxId + 1,name: userInput }];
-    setCategoryList(newList);
-    setInputSelect(maxId + 1);
-    return maxId + 1;
+    // Supabase が ID を採番してくれるので不要になったローカルでのID計算はコメントアウト  
+    // let maxId = categoryList.length > 0 ? Math.max(...categoryList.map(todo => todo.id)) : 0;
+    const { data,error } = await supabase
+      .from('categories')
+      .insert({ name: userInput })
+      .select()
+      .single();
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setCategoryList(prev => [...prev,data]);
+    setInputSelect(data.id);
+    return data.id;
   }
 }
 
 // Todoの内容を追加する関数
-function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError) {
+// supbaseを利用するのでsyncに変更が必要
+async function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError) {
   if (inputText === "" || inputSelect === "") {
     setInputError(1);
     return;
   } else {
     setInputError(0);
+
+    // Supabaseに追加する前のローカルでのID計算は不要になったのでコメントアウト
     // Math.max()は最大値を返す
     // Math.max() は空の配列を渡すとエラーになるので、todosが空の場合は0をセットする
-    let maxId = todos.length > 0 ? Math.max(...todos.map(todo => todo.id)) : 0;
+    // let maxId = todos.length > 0 ? Math.max(...todos.map(todo => todo.id)) : 0;
     // map ではなく、スプレッド構文で新しいオブジェクトを追加する形することで、後ろに追加される
-    setTodos([...todos,{ id: maxId + 1,name: inputText,category: inputSelect,isCheck: false }]);
+    //setTodos([...todos,{ id: maxId + 1,name: inputText,category: inputSelect,isCheck: false }]);
+
+
+    // SupabaseにTodoを追加する
+    const { data,error } = await supabase
+      .from('todos')
+      .insert({ name: inputText,category_id: inputSelect,is_check: false })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    // Supabaseから返ってきたデータをstateに追加する
+    setTodos([...todos,{ ...data,isCheck: false }]);
     setInputText("");
-    return maxId + 1;
+    return data.id;
   }
 }
 
