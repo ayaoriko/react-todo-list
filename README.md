@@ -35,9 +35,14 @@ Canvaのテンプレートをアレンジしました。
 - リストの各項目の編集・削除機能※v1.1で追加
 - カテゴリーの編集・削除機能の追加※v1.1で追加
 - 完了済みを隠す機能の実装※v1.1で追加
+- DB接続(Supabaseを利用)※v1.2で追加
 
 ## 環境
 - Node.js v22.20.0
 - React v19.1.1
+- react-scripts v5.0.1
 - sass（Dart Sass）v1.93.2
+- sass-loader v16.0.5
 - Tailwind CSS v3.4.3 （リセットCSSのみ利用）
+- supabase v2.95.3 
+- react-transition-group v4.4.5
