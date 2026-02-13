@@ -1,15 +1,19 @@
+@use 'sass:math';
 /** Tailwind CSSのリセットCSSのみ利用 **/
 @tailwind base;
+
 
 $transition-default: all 0.3s ease-in-out;
 
 @function rem($px, $base: 16) {
-  @return ($px / $base) * 1rem;
+  @return math.div($px, $base) * 1rem;
 }
 
 $focus-color: #683A1E;
 
 @mixin focusDefault() {
+  overflow-wrap: break-word;
+
   &:focus {
     outline: 1px solid $focus-color;
   }
@@ -71,14 +75,14 @@ body {
     text-align: center;
     background: #795548;
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
     padding: .5em;
   }
 
   height: 10vh;
 
   @media (min-width: 768px) {
-    height: 30vh;
+    height: 15vh;
   }
 }
 
@@ -94,7 +98,7 @@ body {
   letter-spacing: 0.1em;
 
   @media (min-width: 768px) {
-    padding-top: rem(130);
+    padding-top: rem(80);
     font-size: rem(82);
   }
 
@@ -163,6 +167,10 @@ body {
   color: #4b3a30;
   letter-spacing: 0.1em;
   @include focusDefault();
+
+  @media (min-width: 768px) {
+    letter-spacing: 0.2em;
+  }
 }
 
 .category-button {
@@ -235,7 +243,7 @@ body {
 
   @media (min-width: 768px) {
     margin-top: 24px;
-    font-size: 16px;
+    font-size: 14px;
     margin-bottom: -20px;
   }
 }
@@ -247,6 +255,7 @@ body {
 
 .todo-complete svg {
   display: inline-block;
+  margin-top: -5px;
   margin-right: 0.5em;
 }
 
@@ -272,7 +281,7 @@ body {
   letter-spacing: 0.1em;
 
   @media (min-width: 768px) {
-    font-size: rem(22);
+    font-size: rem(18);
     padding: rem(16);
     letter-spacing: 0.2em;
   }
@@ -284,6 +293,8 @@ body {
   border: 1px solid #B0B9C2;
   letter-spacing: 0.1em;
   color: #4b3a30;
+  width: 100%;
+  text-align: center;
   @include focusDefault();
 }
 
@@ -303,16 +314,13 @@ body {
 }
 
 .todo-box-list {
-  padding: 0 12px;
-  background-color: #FFFCF5;
-
-  @media (min-width: 768px) {
-    padding: 0 50px;
-  }
+  padding: 0;
 }
 
 .todo-box-list-item {
   position: relative;
+  padding: 0 12px;
+  background-color: #FFFCF5;
 
   /*** 編集・削除ボタンの表示制御 **/
   &:hover .todo-box-list-item-edit-area {
@@ -326,6 +334,10 @@ body {
 
   &+& {
     border-top: 1px solid #E1DCD5;
+  }
+
+  @media (min-width: 768px) {
+    padding: 0 20px;
   }
 }
 
@@ -341,7 +353,7 @@ body {
   letter-spacing: 0.1em;
 
   @media (min-width: 768px) {
-    padding: 25px 0;
+    padding: 20px 0;
   }
 }
 
@@ -351,10 +363,11 @@ body {
   width: 20px;
   background-color: #DDD0CA;
   cursor: pointer;
+  margin-top: 1px;
 
   @media (min-width: 768px) {
-    height: 32px;
-    width: 32px;
+    height: 16px;
+    width: 16px;
   }
 }
 
@@ -365,10 +378,15 @@ body {
   left: 3px;
 
   @media (min-width: 768px) {
-    width: 24px;
-    height: 24px;
-    top: 30px;
+    width: 16px;
+    height: 16px;
+    top: 21px;
+    left: 0px;
   }
+}
+
+.todo-box-list-item svg:not(.todo-box-checkbox + svg) {
+  display: none;
 }
 
 .todo-box-checkbox:checked+svg {
@@ -389,9 +407,9 @@ body {
   width: calc(100% - 14px - 10px);
 
   @media (min-width: 768px) {
-    margin-left: 24px;
-    font-size: rem(24);
-    width: calc(100% - 24px - 30px - 62px - 62px - rem(14) - rem(14));
+    margin-left: 16px;
+    font-size: rem(16);
+    width: calc(100% - 24px - 30px - 62px - 62px);
   }
 }
 
@@ -401,6 +419,7 @@ body {
   border: 1px solid #B0B9C2;
   letter-spacing: 0.1em;
   color: #4b3a30;
+  width: 100%;
   @include focusDefault();
 }
 
@@ -413,7 +432,7 @@ body {
     padding-bottom: 0;
     opacity: 0;
     position: absolute;
-    right: 0;
+    right: 20px;
     top: 0;
     bottom: 0;
     margin: auto;
@@ -451,4 +470,44 @@ body {
   margin-left: rem(14);
   background-color: #9D1717;
   color: #fff;
+}
+
+.todo-box-list-item-delete.hidden {
+  opacity: 0;
+}
+
+/**登録時の点滅**/
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+/** react-transition-groupでのフェードイン・フェードアウトアニメーション **/
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
 }
