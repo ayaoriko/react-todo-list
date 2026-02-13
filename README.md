@@ -1,20 +1,32 @@
 # React Todo List
 ReactでTodoリストを作りました。
 
+## URL
+実物は下記URLに掲載しています。
+
+https://react-todo-list.ayaoriko.com/
+
+詳しい制作の経緯はブログをご覧ください。
+
+https://ayaoriko.com/coding/react/react-todo-list/
+
+React.jsに必要なコマンドとかは、別リポジトリに記載しています。
+https://github.com/ayaoriko/react-tutorial
+
+
 ## デザイン
 Canvaのテンプレートをアレンジしました。
 [参考テンプレート](https://www.canva.com/ja_jp/templates/EAFXD6ntStg/)
 
-###  PCデザイン
-※全体的にフォントが大きすぎたので、v1.0ではフォントサイズの調整を加えています。
+###  デザインの再現について
+- 上記デザインは v1.0 の段階でのものです。
+- 今回は React の実装を優先したため、カンプの再現度よりも実装を優先しています。特にPCのフォントサイズが全体的に大きかったので、実物ではサイズを変更しています。
+
+###  PCデザインカンプ
 <img width="1400" height="2000" alt="Image" src="https://github.com/user-attachments/assets/b229a847-66dd-472e-b742-a9953b462347" />
 
-###  SPデザイン
+###  SPデザインカンプ
 <img width="375" height="1416" alt="Image" src="https://github.com/user-attachments/assets/ed88ee85-971c-4dd2-aaec-254cd370aabc" />
-
-##  デザインの再現について
-- 上記デザインは v1.0 の段階でのものです。
-- 今回は React の実装を優先したため、デザインカンプの再現度は必ずしも優先していません
 
 ## 実装機能
 - カテゴリー追加機能
@@ -27,9 +39,5 @@ Canvaのテンプレートをアレンジしました。
 ## 環境
 - Node.js v22.20.0
 - React v19.1.1
-- SCSS v1.93.2
+- sass（Dart Sass）v1.93.2
 - Tailwind CSS v3.4.3 （リセットCSSのみ利用）
-
-## 動作方法
-チュートリアル練習用に作ったリポジトリでご確認ください。
-[チュートリアル練習用リポジトリ](https://github.com/ayaoriko/react-tutorial)
