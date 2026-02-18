@@ -4,6 +4,8 @@ import Header from './components/Header';
 import TodoForm from './components/TodoForm';
 import TodoList from './components/TodoList';
 import Footer from './components/Footer';
+import { fetchAllTodos } from './models/todoModel';
+import { fetchAllCategories } from './models/categoryModel';
 
 // supabaseからデータを取得するため、JSONデータのインポートはコメントアウト
 
@@ -11,7 +13,8 @@ import Footer from './components/Footer';
 //import initialCategoryList from "./data/TodoCategory.json";
 
 // supabaseからデータを取得するため、supabase.jsをインポート
-import { supabase } from './supabase';
+// modelから必要な関数だけインポートする形に変更するため、supabase.jsのインポートはコメントアウト
+// import { supabase } from './supabase';
 
 export default function App() {
   // チェックの有無を管理するために、initialTodosの配列にisCheck: falseを追加する
@@ -28,12 +31,14 @@ export default function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: categoryData } = await supabase.from('categories').select('*');
-      const { data: todoData } = await supabase.from('todos').select('*');
+      const categoryData = await fetchAllCategories();
+      const todoData = await fetchAllTodos();
       setCategoryList(categoryData);
       // SupabaseはDBの慣習でスネークケース（is_check）、Reactはキャメルケース（isCheck）になっている
       // Supabaseのカラムのスネークのからキャメルケースに変換する
-      setTodos(todoData.map(todo => ({ ...todo,isCheck: todo.is_check })));
+      // setTodos(todoData.map(todo => ({ ...todo,isCheck: todo.is_check })));
+      // モデルが変換済みのデータを返すので、そのままセットする
+      setTodos(todoData);
     };
     fetchData();
   },[]);
