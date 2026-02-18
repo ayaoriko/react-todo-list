@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CSSTransition,TransitionGroup } from 'react-transition-group';
-import { supabase } from '../supabase';
+import { updateCategoryName,deleteCategory } from '../models/categoryModel';
+import { updateTodoCheck,updateTodoName,deleteTodo } from '../models/todoModel';
 
 export default function TodoList({ todos,setTodos,categoryList,setCategoryList,lastAddedId,lastAddedRef,todoRefs,categoryRefs }) {
     const [showCompleteList,setShowCompleteList] = useState(true);
@@ -20,7 +21,7 @@ export default function TodoList({ todos,setTodos,categoryList,setCategoryList,l
                 {categoryList.map(cat => {
 
                     // そのカテゴリーに属する、Todoの数を数える
-                    const otherItemCount = todos.filter(todo => todo.category_id === cat.id).length;
+                    const otherItemCount = todos.filter(todo => todo.categoryId === cat.id).length;
 
                     // 「未分類」カテゴリーで、かつ、Todoが0件の場合は表示しない
                     if (cat.id === 0 && otherItemCount === 0) {
@@ -28,7 +29,7 @@ export default function TodoList({ todos,setTodos,categoryList,setCategoryList,l
                     }
 
                     // そのカテゴリーに属する、未完了のTodoの数を数える
-                    const lastCheckItemCount = todos.filter(todo => todo.category_id === cat.id && !todo.isCheck).length;
+                    const lastCheckItemCount = todos.filter(todo => todo.categoryId === cat.id && !todo.isCheck).length;
 
                     // 完了済みを非表示にしていて、かつ、そのカテゴリーに未完了のTodoが0件の場合は表示しない
                     if (showCompleteList === false && lastCheckItemCount === 0) {
@@ -68,14 +69,8 @@ function TodoBoxCategoryEditArea({ cat,setCategoryList,setTodos,setCategoryMap,i
         <div className="todo-box-category-edit-area">
             <button className="todo-box-category-edit" onClick={async () => {
                 if (isEdit) {
-                    const { error } = await supabase
-                        .from('categories')
-                        .update({ name: cat.name })
-                        .eq('id',cat.id);
-                    if (error) {
-                        console.error(error);
-                        return;
-                    }
+                    const data = await updateCategoryName(cat.id,cat.name);
+                    if (!data) return;
                 }
                 setCategoryMap(prev => ({
                     ...prev,
@@ -92,25 +87,12 @@ function TodoBoxCategoryEditArea({ cat,setCategoryList,setTodos,setCategoryMap,i
                                 return;
                             }
                             // そのカテゴリーに属するTodoをまず「未分類」に移動する
-                            const { error: updateError } = await supabase
-                                .from('todos')
-                                .update({ category_id: 0 })
-                                .eq('category_id',cat.id);
-                            if (updateError) {
-                                console.error(updateError);
-                                return;
-                            }
                             // カテゴリーを削除する
-                            const { error: deleteError } = await supabase
-                                .from('categories')
-                                .delete()
-                                .eq('id',cat.id);
-                            if (deleteError) {
-                                console.error(deleteError);
-                                return;
-                            }
+                            const data = await deleteCategory(cat.id);
+                            if (!data) return;
+
                             setCategoryList(prev => prev.filter(t => t.id !== cat.id));
-                            setTodos(prev => prev.map(todo => todo.category_id === cat.id ? { ...todo,category_id: 0 } : todo));
+                            setTodos(prev => prev.map(todo => todo.categoryId === cat.id ? { ...todo,categoryId: 0 } : todo));
                         }
                     }}>削除</button>
             }
@@ -134,7 +116,7 @@ function ShowCompleteButton({ showCompleteList,setShowCompleteList }) {
 
 // Todoのリスト部分
 function TodoBoxList({ todos,setTodos,categoryId,lastAddedId,lastAddedRef,todoRefs,showCompleteList }) {
-    let CategoryTodos = todos.filter((todo) => todo.category_id === categoryId);
+    let CategoryTodos = todos.filter((todo) => todo.categoryId === categoryId);
 
     // 完了済みを非表示にする場合、todosから完了済みを除外する
     if (!showCompleteList) {
@@ -183,7 +165,8 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                                 )
                             );
                             // Supabaseのis_checkをtrueに更新する
-                            await supabase.from('todos').update({ is_check: true }).eq('id',todoItem.id);
+                            const success = await updateTodoCheck(todoItem.id,true);
+                            if (!success) return; //成功/失敗だとわかる変数名にする
                             setTimeout(() => {
                                 setTodos(prev =>
                                     prev.map(todo =>
@@ -193,7 +176,8 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                             },300);
                         } else {
                             // Supabaseのis_checkをfalseに更新する
-                            await supabase.from('todos').update({ is_check: false }).eq('id',todoItem.id);
+                            const success = await updateTodoCheck(todoItem.id,false);
+                            if (!success) return; //成功/失敗だとわかる変数名にする
                             setTodos(prev =>
                                 prev.map(todo =>
                                     todo.id === todoItem.id ? { ...todo,isCheck: false } : todo
@@ -218,7 +202,9 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                                 return;
                             }
                             // Supabaseのnameを更新する
-                            await supabase.from('todos').update({ name: todoText }).eq('id',todoItem.id);
+                            const data = await updateTodoName(todoItem.id,todoText);
+                            if (!data) return;
+
                             setTodos(prev =>
                                 prev.map(t =>
                                     t.id === todoItem.id ? { ...t,name: todoText } : t
@@ -233,12 +219,8 @@ function TodoBoxListItem({ todoItem,setTodos,lastAddedId,lastAddedRef,nodeRef })
                         onClick={async () => {
                             if (window.confirm("本当に削除しますか？")) {
                                 // setTodos の前に Supabase の delete を呼ぶ
-                                const { error } = await supabase.from('todos').delete().eq('id',todoItem.id);
-                                if (error) {
-                                    // エラーが返ってきたら setTodos は実行しないようにする
-                                    console.error(error);
-                                    return;
-                                }
+                                const data = await deleteTodo(todoItem.id);
+                                if (!data) return;
                                 setTodos(prev => prev.filter(t => t.id !== todoItem.id));
                             }
                         }}

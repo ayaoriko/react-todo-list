@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../supabase';
+import { insertTodo } from '../models/todoModel';
+import { insertCategory } from '../models/categoryModel';
+
 export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,setLastAddedId }) {
   const [inputText,setInputText] = useState("");
   const [inputSelect,setInputSelect] = useState(0);
@@ -60,20 +62,14 @@ function TodoFormCategorySelect({ categoryList,inputSelect,setInputSelect }) {
 }
 
 // カテゴリーを追加するボタンの動作
-async function AddCategory(categoryList,setCategoryList,setInputSelect) {
+async function AddCategory(setCategoryList,setInputSelect) {
   const userInput = prompt("カテゴリー名を入力してください");
   if (userInput) {
     // Supabase が ID を採番してくれるので不要になったローカルでのID計算はコメントアウト  
     // let maxId = categoryList.length > 0 ? Math.max(...categoryList.map(todo => todo.id)) : 0;
-    const { data,error } = await supabase
-      .from('categories')
-      .insert({ name: userInput })
-      .select()
-      .single();
-    if (error) {
-      console.error(error);
-      return;
-    }
+
+    const data = await insertCategory(userInput);
+    if (!data) return;// モデル関数を呼んだ後は必ずエラーチェックをする習慣をつける。失敗したらnullが返るので、if (!data) return; でそこで処理を終える。
     setCategoryList(prev => [...prev,data]);
     setInputSelect(data.id);
     return data.id;
@@ -98,18 +94,12 @@ async function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,
 
 
     // SupabaseにTodoを追加する
-    const { data,error } = await supabase
-      .from('todos')
-      .insert({ name: inputText,category_id: inputSelect,is_check: false })
-      .select()
-      .single();
-
-    if (error) {
-      console.error(error);
-      return;
-    }
+    const data = await insertTodo(inputText,inputSelect);
+    if (!data) return; // モデル関数を呼んだ後は必ずエラーチェックをする習慣をつける。失敗したらnullが返るので、if (!data) return; でそこで処理を終える。
     // Supabaseから返ってきたデータをstateに追加する
-    setTodos([...todos,{ ...data,isCheck: false }]);
+    //setTodos(data)だと既存のTodoが全部消えて新しい1件だけになってしまう
+    // 既存のTodoに追加する
+    setTodos([...todos,data]);
     setInputText("");
     return data.id;
   }
