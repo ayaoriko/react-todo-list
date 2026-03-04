@@ -4,9 +4,9 @@ import { supabase } from '../supabase';
 // DBから取得したデータをReact用に変換する関数。
 // 例: { id: 1, name: '買い物', category_id: 2, is_check: false }
 //   → { id: 1, name: '買い物', categoryId: 2, isCheck: false }
-function toClientTodo(dbTodo) {
+function toClientTodo(dbTodo: any) { // 将来: dbTodo: DbTodo
     // 分割代入で、is_check と category_id を取り出し、restに残りのプロパティをまとめる
-    const { is_check,category_id,...rest } = dbTodo;
+    const { is_check, category_id, ...rest } = dbTodo;
     // 変換して返す。is_check → isCheck、category_id → categoryId に変換する
     return {
         ...rest,
@@ -19,8 +19,8 @@ function toClientTodo(dbTodo) {
 // state操作はコンポーネントの仕事なので、ここではSupabaseにアクセスしてデータを取得・更新する関数だけを書く
 
 // TODO一覧を取得する関数
-export async function fetchAllTodos() {
-    const { data,error } = await supabase.from('todos').select('*');
+export async function fetchAllTodos(): Promise<any[]> {
+    const { data, error } = await supabase.from('todos').select('*');
     if (error) {
         console.error(error);
         return [];
@@ -30,12 +30,12 @@ export async function fetchAllTodos() {
 }
 
 //TODOを挿入する関数
-export async function insertTodo(name,categoryId) {
+export async function insertTodo(name: string, categoryId: number): Promise<any> {
     // SupabaseにTodoを追加する
     // .single() をつけることで [ {id: 1...} ] ではなく {id: 1...} という 「1つのオブジェクト」 として直接受け取れるようになる
-    const { data,error } = await supabase
+    const { data, error } = await supabase
         .from('todos')
-        .insert({ name: name,category_id: categoryId,is_check: false })
+        .insert({ name: name, category_id: categoryId, is_check: false })
         .select()
         .single();
 
@@ -48,9 +48,9 @@ export async function insertTodo(name,categoryId) {
 }
 
 // Todoのチェックを切り替える関数。isCheckはtrue/falseで渡す
-export async function updateTodoCheck(id,isCheck) {
+export async function updateTodoCheck(id: number, isCheck: boolean): Promise<boolean> {
     // Supabaseのis_checkをfalseに更新する
-    const { error } = await supabase.from('todos').update({ is_check: isCheck }).eq('id',id);
+    const { error } = await supabase.from('todos').update({ is_check: isCheck }).eq('id', id);
     // この関数はデータを返す必要がない（チェックを切り替えるだけ）ので、返すのはtrue/falseの成功失敗だけにする
     // データが欲しい関数（fetch, insert）は、成功したらデータを返す。失敗したらnullを返す。
     // 更新・削除だけの関数（update, delete）は、成功したかどうかだけ返す形にする
@@ -61,8 +61,8 @@ export async function updateTodoCheck(id,isCheck) {
     return true;
 }
 
-export async function updateTodoName(id,name) {
-    const { error } = await supabase.from('todos').update({ name: name }).eq('id',id);
+export async function updateTodoName(id: number, name: string): Promise<boolean> {
+    const { error } = await supabase.from('todos').update({ name: name }).eq('id', id);
     if (error) {
         console.error(error);
         return false;
@@ -70,8 +70,8 @@ export async function updateTodoName(id,name) {
     return true;
 }
 
-export async function deleteTodo(id) {
-    const { error } = await supabase.from('todos').delete().eq('id',id);
+export async function deleteTodo(id: number): Promise<boolean> {
+    const { error } = await supabase.from('todos').delete().eq('id', id);
     if (error) {
         console.error(error);
         return false;
@@ -80,8 +80,8 @@ export async function deleteTodo(id) {
 }
 
 // reassignは再割り当て：カテゴリー削除時にTodoを未分類(category_id=0)に移動する関数
-export async function reassignTodosToUncategorized(categoryId) {
-    const { error } = await supabase.from('todos').update({ category_id: 0 }).eq('category_id',categoryId);
+export async function reassignTodosToUncategorized(categoryId: number): Promise<boolean> {
+    const { error } = await supabase.from('todos').update({ category_id: 0 }).eq('category_id', categoryId);
     if (error) {
         console.error(error);
         return false;

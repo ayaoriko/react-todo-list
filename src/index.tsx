@@ -4,7 +4,9 @@ import './index.scss';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+// getElementById は HTMLElement | null を返すけど、createRoot は null を受け付けないため、
+// 「!」をつけて「ここはnullじゃないよ」とTypeScriptに教えてあげる必要がある
+const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
   <React.StrictMode>
     <App />

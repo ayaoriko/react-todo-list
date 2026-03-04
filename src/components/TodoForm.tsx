@@ -1,26 +1,27 @@
-import { useState } from 'react';
+import { useState, Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import { insertTodo } from '../models/todoModel';
 import { insertCategory } from '../models/categoryModel';
 
-export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,setLastAddedId }) {
-  const [inputText,setInputText] = useState("");
-  const [inputSelect,setInputSelect] = useState(0);
-  const [inputError,setInputError] = useState(0);
+export default function TodoForm({ todos, setTodos, categoryList, setCategoryList, setLastAddedId }: { todos: any[], setTodos: (value: any[]) => void, categoryList: any[], setCategoryList: Dispatch<SetStateAction<any[]>>, setLastAddedId: (value: number | null) => void }) {
+  const [inputText, setInputText] = useState("");
+  const [inputSelect, setInputSelect] = useState(0);
+  const [inputError, setInputError] = useState(0);
 
   // フォームの送信ボタンが押されたときの動作
   // supbaseを利用するにあたりhandleSubmitもasync/awaitに変更が必要
-  const handleSubmit = async (e) => {
+  // SyntheticEventはReactのイベントオブジェクトの型。FormEventもあるが非推奨で、代わりにSyntheticEventを使うのが公式の推奨
+  const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     // addTodoContentの戻り値として新しく追加したTodoのIDが返ってくる
     // supbaseのデータを待つので、addTodoContentの呼び出しにawaitが必要
-    const newId = await addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError);
+    const newId = await addTodoContent(todos, setTodos, inputText, setInputText, inputSelect, setInputError);
 
     // 追加した瞬間にblinkクラスを付けて、2秒後に外す挙動
     if (newId) {
       // 追加したTodoのIDをstateに保存します。これがblinkクラスを付ける条件になります。
       setLastAddedId(newId);
       // 2b000ミリ秒後にlastAddedIdをnullに戻して、blinkクラスを外します。
-      setTimeout(() => setLastAddedId(null),1000);
+      setTimeout(() => setLastAddedId(null), 1000);
     }
   };
   return (
@@ -31,7 +32,7 @@ export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,s
           <TodoFormCategorySelect categoryList={categoryList} inputSelect={inputSelect} setInputSelect={setInputSelect} />
           {/*呼び出し側のボタンも async に変える*/}
           <button className="category-button" type="button" onClick={async () => {
-            await AddCategory(categoryList,setCategoryList,setInputSelect);
+            await AddCategory(categoryList, setCategoryList, setInputSelect);
           }}
           >カテゴリーを追加する</button>
         </div>
@@ -47,7 +48,7 @@ export default function TodoForm({ todos,setTodos,categoryList,setCategoryList,s
 }
 
 // カテゴリー選択のセレクトボックス
-function TodoFormCategorySelect({ categoryList,inputSelect,setInputSelect }) {
+function TodoFormCategorySelect({ categoryList, inputSelect, setInputSelect }: { categoryList: any[], inputSelect: number, setInputSelect: (value: number) => void }) {
   return (
     <>
       {/* e.target.valueはHTMLの仕様で文字列のため、parseInt(e.target.value)にして数値にする */}
@@ -62,7 +63,10 @@ function TodoFormCategorySelect({ categoryList,inputSelect,setInputSelect }) {
 }
 
 // カテゴリーを追加するボタンの動作
-async function AddCategory(setCategoryList,setInputSelect) {
+// setter を props で渡すときに、prev => を使う時はDispatchが必要。
+// DispatchとSetStateActionは、ReactのuseStateでstateを更新する関数の型を定義するためのもの。
+// これを使うことで、setCategoryListの引数が正しい型であることをTypeScriptに伝えることができる。
+async function AddCategory(categoryList: any[], setCategoryList: Dispatch<SetStateAction<any[]>>, setInputSelect: (value: number) => void) {
   const userInput = prompt("カテゴリー名を入力してください");
   if (userInput) {
     // Supabase が ID を採番してくれるので不要になったローカルでのID計算はコメントアウト  
@@ -70,7 +74,7 @@ async function AddCategory(setCategoryList,setInputSelect) {
 
     const data = await insertCategory(userInput);
     if (!data) return;// モデル関数を呼んだ後は必ずエラーチェックをする習慣をつける。失敗したらnullが返るので、if (!data) return; でそこで処理を終える。
-    setCategoryList(prev => [...prev,data]);
+    setCategoryList(prev => [...prev, data]);
     setInputSelect(data.id);
     return data.id;
   }
@@ -78,8 +82,8 @@ async function AddCategory(setCategoryList,setInputSelect) {
 
 // Todoの内容を追加する関数
 // supbaseを利用するのでsyncに変更が必要
-async function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,setInputError) {
-  if (inputText === "" || inputSelect === "") {
+async function addTodoContent(todos: any[], setTodos: (value: any[]) => void, inputText: string, setInputText: (value: string) => void, inputSelect: number, setInputError: (value: number) => void) {
+  if (inputText === "") {
     setInputError(1);
     return;
   } else {
@@ -94,12 +98,12 @@ async function addTodoContent(todos,setTodos,inputText,setInputText,inputSelect,
 
 
     // SupabaseにTodoを追加する
-    const data = await insertTodo(inputText,inputSelect);
+    const data = await insertTodo(inputText, inputSelect);
     if (!data) return; // モデル関数を呼んだ後は必ずエラーチェックをする習慣をつける。失敗したらnullが返るので、if (!data) return; でそこで処理を終える。
     // Supabaseから返ってきたデータをstateに追加する
     //setTodos(data)だと既存のTodoが全部消えて新しい1件だけになってしまう
     // 既存のTodoに追加する
-    setTodos([...todos,data]);
+    setTodos([...todos, data]);
     setInputText("");
     return data.id;
   }

@@ -1,4 +1,4 @@
-import { useState,useEffect,useRef,createRef } from 'react';
+import { useState, useEffect, useRef, createRef, RefObject } from 'react';
 
 import Header from './components/Header';
 import TodoForm from './components/TodoForm';
@@ -23,11 +23,11 @@ export default function App() {
   //const [todos,setTodos] = useState(initialTodos.map(todo => ({ ...todo,isCheck: false })));
 
   // supabaseからデータを取得するため、useStateの初期値を空配列に変更する
-  const [todos,setTodos] = useState([]);
-  const [categoryList,setCategoryList] = useState([]);
+  const [todos, setTodos] = useState<any[]>([])
+  const [categoryList, setCategoryList] = useState<any[]>([])
 
   // 追加したTodoのIDを保存するstate
-  const [lastAddedId,setLastAddedId] = useState(null);
+  const [lastAddedId, setLastAddedId] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,18 +41,18 @@ export default function App() {
       setTodos(todoData);
     };
     fetchData();
-  },[]);
+  }, []);
 
 
   // todoRefsはDOM要素としてのTodoリスト」
   // 最初の1回しかアニメーションが効かない問題を解決するために、useRef({})で作ったtodoRefsに一度作ったrefを保存しておくことで、毎回新しいrefが作られないようにする
   // todoRefsはあくまで「どのDOM要素がどのtodoに対応しているか」を管理するための対応表で、画面に表示する内容とは別物
-  const todoRefs = useRef({});
+  const todoRefs = useRef<Record<number, RefObject<HTMLLIElement | null>>>({});
 
   // refがなければ作る
   todos.forEach(todo => {
     if (!todoRefs.current[todo.id]) {
-      todoRefs.current[todo.id] = createRef();
+      todoRefs.current[todo.id] = createRef<HTMLLIElement>();
     }
   });
 
@@ -70,10 +70,10 @@ export default function App() {
 
 
   // カテゴリーもtodoRefsと同様にrefを管理する
-  const categoryRefs = useRef({});
+  const categoryRefs = useRef<Record<number, RefObject<HTMLDivElement | null>>>({});
   categoryList.forEach(cat => {
     if (!categoryRefs.current[cat.id]) {
-      categoryRefs.current[cat.id] = createRef();
+      categoryRefs.current[cat.id] = createRef<HTMLDivElement>();
     }
   });
 
@@ -81,14 +81,14 @@ export default function App() {
   // useRef(null)で初期化したlastAddedRef 
   // <li ref={lastAddedRef}>のようにHTML上で指定することで、
   // liをDOMに配置した瞬間にlastAddedRef.currentにそのDOM要素が入ります。
-  const lastAddedRef = useRef(null);
+  const lastAddedRef = useRef<HTMLLIElement | null>(null)
   // useEffectはlastAddedIdが変わるたびに実行されるので、
   useEffect(() => {
     // 新しいアイテムが追加されてlastAddedIdが更新されるとscrollIntoViewが走って追加したアイテムまでスムーズにスクロールする
     if (lastAddedRef.current) {
-      lastAddedRef.current.scrollIntoView({ behavior: "smooth",block: "center" });
+      lastAddedRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  },[lastAddedId]);
+  }, [lastAddedId]);
 
   return (
     <div className="root-inner">
