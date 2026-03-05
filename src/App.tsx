@@ -29,6 +29,9 @@ export default function App() {
   // 追加したTodoのIDを保存するstate
   const [lastAddedId, setLastAddedId] = useState<number | null>(null)
 
+  // データの初回読み込み中は「読み込み中...」と表示するためのstate
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       const categoryData = await fetchAllCategories();
@@ -39,6 +42,7 @@ export default function App() {
       // setTodos(todoData.map(todo => ({ ...todo,isCheck: todo.is_check })));
       // モデルが変換済みのデータを返すので、そのままセットする
       setTodos(todoData);
+      setIsInitialLoad(false); // ← データ到着と同時にfalseにする
     };
     fetchData();
   }, []);
@@ -94,7 +98,7 @@ export default function App() {
     <div className="root-inner">
       <Header />
       <TodoForm todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} setLastAddedId={setLastAddedId} />
-      <TodoList todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs.current} categoryRefs={categoryRefs.current} />
+      <TodoList todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs.current} categoryRefs={categoryRefs.current} isInitialLoad={isInitialLoad} />
       <Footer />
     </div>
   );
