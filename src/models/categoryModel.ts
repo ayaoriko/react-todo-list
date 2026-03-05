@@ -1,15 +1,16 @@
 import { supabase } from '../supabase';
 import { reassignTodosToUncategorized } from './todoModel';
+import type { Category } from '../types/index';
 
 // 一覧を取得する関数
-export async function fetchAllCategories(): Promise<any[]> {
+export async function fetchAllCategories(): Promise<Category[]> {
     const { data, error } = await supabase.from('categories').select('*');
     if (error) {
         console.error(error);
         return [];
     }
     // DBのスネークケースをキャメルケースに変換して返す
-    return data;
+    return data as Category[]; // //  型アサーション。「data  の戻り値は Category[] だよ」と断言
 }
 
 //カテゴリーを挿入する関数
@@ -30,6 +31,7 @@ export async function insertCategory(name: string): Promise<any> {
     return data;
 }
 
+// Category 型が他に createdAt とか slug とか持っていたとしても、名前の更新には不要なプロパティなので、引数の型は Category ではなく、更新に必要な id と name のみに絞った方が、この関数の目的が明確になる
 export async function updateCategoryName(id: number, name: string): Promise<boolean> {
     const { error } = await supabase.from('categories').update({ name: name }).eq('id', id);
     if (error) {

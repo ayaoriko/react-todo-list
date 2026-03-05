@@ -2,8 +2,9 @@ import { useState, Dispatch, SetStateAction, RefObject } from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import { updateCategoryName, deleteCategory } from '../models/categoryModel';
 import { updateTodoCheck, updateTodoName, deleteTodo } from '../models/todoModel';
+import type { Todo, Category, TodoRefMap, CategoryRefMap } from '../types/index';
 
-export default function TodoList({ todos, setTodos, categoryList, setCategoryList, lastAddedId, lastAddedRef, todoRefs, categoryRefs, isInitialLoad }: { todos: any[], setTodos: Dispatch<SetStateAction<any[]>>, categoryList: any[], setCategoryList: Dispatch<SetStateAction<any[]>>, lastAddedId: number | null, lastAddedRef: any, todoRefs: any, categoryRefs: any, isInitialLoad: boolean }) {
+export default function TodoList({ todos, setTodos, categoryList, setCategoryList, lastAddedId, lastAddedRef, todoRefs, categoryRefs, isInitialLoad }: { todos: Todo[], setTodos: Dispatch<SetStateAction<Todo[]>>, categoryList: Category[], setCategoryList: Dispatch<SetStateAction<Category[]>>, lastAddedId: number | null, lastAddedRef: RefObject<HTMLLIElement | null>, todoRefs: TodoRefMap, categoryRefs: CategoryRefMap, isInitialLoad: boolean }) {
     const [showCompleteList, setShowCompleteList] = useState(true);
     // { カテゴリーID: true or false } の形で編集モードかどうかを管理
     //   これだと型が {} と推論されてインデックスアクセスできない
@@ -76,7 +77,10 @@ export default function TodoList({ todos, setTodos, categoryList, setCategoryLis
     );
 }
 
-function TodoBoxCategoryEditArea({ cat, setCategoryList, setTodos, setCategoryMap, isEdit }: { cat: any, setCategoryList: Dispatch<SetStateAction<any[]>>, setTodos: Dispatch<SetStateAction<any[]>>, setCategoryMap: Dispatch<SetStateAction<any[]>> | ((value: any) => void), isEdit: boolean }) {
+function TodoBoxCategoryEditArea({ cat, setCategoryList, setTodos, setCategoryMap, isEdit }: {
+    cat: Category, setCategoryList: Dispatch<SetStateAction<Category[]>>, setTodos: Dispatch<SetStateAction<Todo[]>>, setCategoryMap: Dispatch<SetStateAction<Record<number, boolean>>>
+    , isEdit: boolean
+}) {
     return (
         <div className="todo-box-category-edit-area">
             <button className="todo-box-category-edit" onClick={async () => {
@@ -127,7 +131,8 @@ function ShowCompleteButton({ showCompleteList, setShowCompleteList }: { showCom
 }
 
 // Todoのリスト部分
-function TodoBoxList({ todos, setTodos, categoryId, lastAddedId, lastAddedRef, todoRefs, showCompleteList }: { todos: any[], setTodos: Dispatch<SetStateAction<any[]>>, categoryId: number, lastAddedId: number | null, lastAddedRef: RefObject<HTMLLIElement | null>, todoRefs: Record<number, RefObject<HTMLLIElement | null>>, showCompleteList: boolean }) {
+// useState<T> の setter を props で渡すときは Dispatch<SetStateAction<T>> を書く
+function TodoBoxList({ todos, setTodos, categoryId, lastAddedId, lastAddedRef, todoRefs, showCompleteList }: { todos: Todo[], setTodos: Dispatch<SetStateAction<Todo[]>>, categoryId: number, lastAddedId: number | null, lastAddedRef: RefObject<HTMLLIElement | null>, todoRefs: TodoRefMap, showCompleteList: boolean }) {
     let CategoryTodos = todos.filter((todo) => todo.categoryId === categoryId);
 
     // 完了済みを非表示にする場合、todosから完了済みを除外する
@@ -150,7 +155,7 @@ function TodoBoxList({ todos, setTodos, categoryId, lastAddedId, lastAddedRef, t
 // Todoのリスト部分の各アイテム
 // 子コンポーネントに分割して、useState を局所的に持たせることで、
 // 各Todoごとに個別の state を持てるようにする
-function TodoBoxListItem({ todoItem, setTodos, lastAddedId, lastAddedRef, nodeRef }: { todoItem: any, setTodos: Dispatch<SetStateAction<any[]>>, lastAddedId: number | null, lastAddedRef: RefObject<HTMLLIElement | null>, nodeRef: RefObject<HTMLLIElement | null> }) {
+function TodoBoxListItem({ todoItem, setTodos, lastAddedId, lastAddedRef, nodeRef }: { todoItem: Todo, setTodos: Dispatch<SetStateAction<Todo[]>>, lastAddedId: number | null, lastAddedRef: RefObject<HTMLLIElement | null>, nodeRef: RefObject<HTMLLIElement | null> }) {
     const [isEditTodoItem, setIsEditTodoItem] = useState(false);
     const [todoText, setTodoText] = useState(todoItem.name);
     return (

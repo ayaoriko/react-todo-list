@@ -1,10 +1,11 @@
 import { supabase } from '../supabase';
+import type { Todo } from '../types/index';
 // 変換ヘルパーを書く
 // モデル内だけで書くのでexport はしない
 // DBから取得したデータをReact用に変換する関数。
 // 例: { id: 1, name: '買い物', category_id: 2, is_check: false }
 //   → { id: 1, name: '買い物', categoryId: 2, isCheck: false }
-function toClientTodo(dbTodo: any) { // 将来: dbTodo: DbTodo
+function toClientTodo(dbTodo: any): Todo { // 将来: dbTodo: DbTodo
     // 分割代入で、is_check と category_id を取り出し、restに残りのプロパティをまとめる
     const { is_check, category_id, ...rest } = dbTodo;
     // 変換して返す。is_check → isCheck、category_id → categoryId に変換する
@@ -19,7 +20,7 @@ function toClientTodo(dbTodo: any) { // 将来: dbTodo: DbTodo
 // state操作はコンポーネントの仕事なので、ここではSupabaseにアクセスしてデータを取得・更新する関数だけを書く
 
 // TODO一覧を取得する関数
-export async function fetchAllTodos(): Promise<any[]> {
+export async function fetchAllTodos(): Promise<Todo[]> {
     const { data, error } = await supabase.from('todos').select('*');
     if (error) {
         console.error(error);
@@ -30,7 +31,7 @@ export async function fetchAllTodos(): Promise<any[]> {
 }
 
 //TODOを挿入する関数
-export async function insertTodo(name: string, categoryId: number): Promise<any> {
+export async function insertTodo(name: string, categoryId: number): Promise<Todo | null> {
     // SupabaseにTodoを追加する
     // .single() をつけることで [ {id: 1...} ] ではなく {id: 1...} という 「1つのオブジェクト」 として直接受け取れるようになる
     const { data, error } = await supabase

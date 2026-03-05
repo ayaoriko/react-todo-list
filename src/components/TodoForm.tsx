@@ -1,8 +1,9 @@
 import { useState, Dispatch, SetStateAction, SyntheticEvent } from 'react';
 import { insertTodo } from '../models/todoModel';
 import { insertCategory } from '../models/categoryModel';
+import type { Todo, Category } from '../types/index';
 
-export default function TodoForm({ todos, setTodos, categoryList, setCategoryList, setLastAddedId }: { todos: any[], setTodos: (value: any[]) => void, categoryList: any[], setCategoryList: Dispatch<SetStateAction<any[]>>, setLastAddedId: (value: number | null) => void }) {
+export default function TodoForm({ todos, setTodos, categoryList, setCategoryList, setLastAddedId }: { todos: Todo[], setTodos: (value: Todo[]) => void, categoryList: Category[], setCategoryList: Dispatch<SetStateAction<Category[]>>, setLastAddedId: (value: number | null) => void }) {
   const [inputText, setInputText] = useState("");
   const [inputSelect, setInputSelect] = useState(0);
   const [inputError, setInputError] = useState(0);
@@ -32,7 +33,7 @@ export default function TodoForm({ todos, setTodos, categoryList, setCategoryLis
           <TodoFormCategorySelect categoryList={categoryList} inputSelect={inputSelect} setInputSelect={setInputSelect} />
           {/*呼び出し側のボタンも async に変える*/}
           <button className="category-button" type="button" onClick={async () => {
-            await AddCategory(categoryList, setCategoryList, setInputSelect);
+            await AddCategory(setCategoryList, setInputSelect);
           }}
           >カテゴリーを追加する</button>
         </div>
@@ -48,7 +49,7 @@ export default function TodoForm({ todos, setTodos, categoryList, setCategoryLis
 }
 
 // カテゴリー選択のセレクトボックス
-function TodoFormCategorySelect({ categoryList, inputSelect, setInputSelect }: { categoryList: any[], inputSelect: number, setInputSelect: (value: number) => void }) {
+function TodoFormCategorySelect({ categoryList, inputSelect, setInputSelect }: { categoryList: Category[], inputSelect: number, setInputSelect: (value: number) => void }) {
   return (
     <>
       {/* e.target.valueはHTMLの仕様で文字列のため、parseInt(e.target.value)にして数値にする */}
@@ -66,7 +67,7 @@ function TodoFormCategorySelect({ categoryList, inputSelect, setInputSelect }: {
 // setter を props で渡すときに、prev => を使う時はDispatchが必要。
 // DispatchとSetStateActionは、ReactのuseStateでstateを更新する関数の型を定義するためのもの。
 // これを使うことで、setCategoryListの引数が正しい型であることをTypeScriptに伝えることができる。
-async function AddCategory(categoryList: any[], setCategoryList: Dispatch<SetStateAction<any[]>>, setInputSelect: (value: number) => void) {
+async function AddCategory(setCategoryList: Dispatch<SetStateAction<Category[]>>, setInputSelect: (value: number) => void) {
   const userInput = prompt("カテゴリー名を入力してください");
   if (userInput) {
     // Supabase が ID を採番してくれるので不要になったローカルでのID計算はコメントアウト  
@@ -82,7 +83,7 @@ async function AddCategory(categoryList: any[], setCategoryList: Dispatch<SetSta
 
 // Todoの内容を追加する関数
 // supbaseを利用するのでsyncに変更が必要
-async function addTodoContent(todos: any[], setTodos: (value: any[]) => void, inputText: string, setInputText: (value: string) => void, inputSelect: number, setInputError: (value: number) => void) {
+async function addTodoContent(todos: Todo[], setTodos: (value: Todo[]) => void, inputText: string, setInputText: (value: string) => void, inputSelect: number, setInputError: (value: number) => void) {
   if (inputText === "") {
     setInputError(1);
     return;
