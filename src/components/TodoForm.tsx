@@ -3,9 +3,16 @@ import { insertTodo } from '../models/todoModel';
 import { insertCategory } from '../models/categoryModel';
 import type { Todo, Category } from '../types/index';
 
-export default function TodoForm({ todos, setTodos, categoryList, setCategoryList, setLastAddedId }: { todos: Todo[], setTodos: (value: Todo[]) => void, categoryList: Category[], setCategoryList: Dispatch<SetStateAction<Category[]>>, setLastAddedId: (value: number | null) => void }) {
+export default function TodoForm({ todos, setTodos, categoryList, setCategoryList, setLastAddedId, inputSelect, setInputSelect }: {
+  todos: Todo[],
+  setTodos: (value: Todo[]) => void,
+  categoryList: Category[],
+  setCategoryList: Dispatch<SetStateAction<Category[]>>,
+  setLastAddedId: (value: number | null) => void,
+  inputSelect: number,
+  setInputSelect: Dispatch<SetStateAction<number>>
+}) {
   const [inputText, setInputText] = useState("");
-  const [inputSelect, setInputSelect] = useState(0);
   const [inputError, setInputError] = useState(0);
 
   // フォームの送信ボタンが押されたときの動作

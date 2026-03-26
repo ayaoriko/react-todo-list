@@ -1,10 +1,18 @@
-import { supabase } from '../supabase';
+// Laravel移行に伴いコメントアウト
+//import { supabase } from '../supabase';
 import type { Todo } from '../types/index';
+
+const BASE_URL = process.env.REACT_APP_LARAVEL_API_URL;
+const TODO_URL = `${BASE_URL}/todos`;
+
 // 変換ヘルパーを書く
 // モデル内だけで書くのでexport はしない
 // DBから取得したデータをReact用に変換する関数。
 // 例: { id: 1, name: '買い物', category_id: 2, is_check: false }
 //   → { id: 1, name: '買い物', categoryId: 2, isCheck: false }
+
+/*** Laravel側で処理しているのでコメントアウト
+ * 
 function toClientTodo(dbTodo: any): Todo { // 将来: dbTodo: DbTodo
     // 分割代入で、is_check と category_id を取り出し、restに残りのプロパティをまとめる
     const { is_check, category_id, ...rest } = dbTodo;
@@ -16,70 +24,133 @@ function toClientTodo(dbTodo: any): Todo { // 将来: dbTodo: DbTodo
     };
 }
 
+***/
+
 // 次にCRUD関数を書く
 // state操作はコンポーネントの仕事なので、ここではSupabaseにアクセスしてデータを取得・更新する関数だけを書く
 
 // TODO一覧を取得する関数
 export async function fetchAllTodos(): Promise<Todo[]> {
-    const { data, error } = await supabase.from('todos').select('*');
-    if (error) {
+    //const { data, error } = await supabase.from('todos').select('*');
+    //if (error) {
+    //    console.error(error);
+    //    return [];
+    //}
+    //// DBのスネークケースをキャメルケースに変換して返す
+    //return data.map(todo => toClientTodo(todo));
+    try {
+        const response = await fetch(TODO_URL);
+        const data = await response.json();
+        return data as Todo[];
+    } catch (error) {
         console.error(error);
         return [];
     }
-    // DBのスネークケースをキャメルケースに変換して返す
-    return data.map(todo => toClientTodo(todo));
 }
 
 //TODOを挿入する関数
 export async function insertTodo(name: string, categoryId: number): Promise<Todo | null> {
     // SupabaseにTodoを追加する
     // .single() をつけることで [ {id: 1...} ] ではなく {id: 1...} という 「1つのオブジェクト」 として直接受け取れるようになる
-    const { data, error } = await supabase
-        .from('todos')
-        .insert({ name: name, category_id: categoryId, is_check: false })
-        .select()
-        .single();
+    //const { data, error } = await supabase
+    //    .from('todos')
+    //    .insert({ name: name, category_id: categoryId, is_check: false })
+    //    .select()
+    //    .single();
 
-    if (error) {
+    //if (error) {
+    //    console.error(error);
+    //    return null;
+    //}
+    // 1件なので(.single()で指定してあるので)mapではなくそのまま渡す
+    //return toClientTodo(data);
+    try {
+        const response = await fetch(TODO_URL,
+            {
+                method: 'POST', headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify({ name: name, categoryId: categoryId }),
+            });
+        const data = await response.json();
+        return data as Todo;
+    } catch (error) {
         console.error(error);
         return null;
     }
-    // 1件なので(.single()で指定してあるので)mapではなくそのまま渡す
-    return toClientTodo(data);
 }
 
 // Todoのチェックを切り替える関数。isCheckはtrue/falseで渡す
 export async function updateTodoCheck(id: number, isCheck: boolean): Promise<boolean> {
     // Supabaseのis_checkをfalseに更新する
-    const { error } = await supabase.from('todos').update({ is_check: isCheck }).eq('id', id);
+    //const { error } = await supabase.from('todos').update({ is_check: isCheck }).eq('id', id);
     // この関数はデータを返す必要がない（チェックを切り替えるだけ）ので、返すのはtrue/falseの成功失敗だけにする
     // データが欲しい関数（fetch, insert）は、成功したらデータを返す。失敗したらnullを返す。
     // 更新・削除だけの関数（update, delete）は、成功したかどうかだけ返す形にする
-    if (error) {
+    //if (error) {
+    //    console.error(error);
+    //    return false;
+    //}
+    //return true;
+
+    try {
+        await fetch(`${TODO_URL}/${id}/check`,
+            {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify({ isCheck: isCheck }),
+            });
+        // レスポンスの中身を使わない場合はresponse.json()は不要
+        //const data = await response.json(); return true;
+        return true;
+    } catch (error) {
         console.error(error);
         return false;
     }
-    return true;
 }
 
 export async function updateTodoName(id: number, name: string): Promise<boolean> {
-    const { error } = await supabase.from('todos').update({ name: name }).eq('id', id);
-    if (error) {
+    //const { error } = await supabase.from('todos').update({ name: name }).eq('id', id);
+    //if (error) {
+    //    console.error(error);
+    //    return false;
+    //}
+    //return true;
+    try {
+        await fetch(`${TODO_URL}/${id}/name`,
+            {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', },
+                body: JSON.stringify({ name: name }),
+            });
+        // レスポンスの中身を使わない場合はresponse.json()は不要
+        //const data = await response.json(); return true;
+        return true;
+    } catch (error) {
         console.error(error);
         return false;
     }
-    return true;
+
 }
 
 export async function deleteTodo(id: number): Promise<boolean> {
-    const { error } = await supabase.from('todos').delete().eq('id', id);
-    if (error) {
+    //const { error } = await supabase.from('todos').delete().eq('id', id);
+    //if (error) {
+    //    console.error(error);
+    //    return false;
+    //}
+    //return true;
+    try {
+        await fetch(`${TODO_URL}/${id}`,
+            {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json', }
+            });
+        return true;
+    } catch (error) {
         console.error(error);
         return false;
     }
-    return true;
-}
 
+}
+/***
+ * Laravel側で処理しているのでコメントアウト
+ * 
 // reassignは再割り当て：カテゴリー削除時にTodoを未分類(category_id=0)に移動する関数
 export async function reassignTodosToUncategorized(categoryId: number): Promise<boolean> {
     const { error } = await supabase.from('todos').update({ category_id: 0 }).eq('category_id', categoryId);
@@ -90,4 +161,4 @@ export async function reassignTodosToUncategorized(categoryId: number): Promise<
     return true;
 }
 
-
+***/
