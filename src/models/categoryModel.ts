@@ -59,7 +59,7 @@ export async function updateCategoryName(id: number, name: string): Promise<bool
         //    console.error(error);
         //    return false;
         //}
-        const response = await fetch(`${CATEGORY_URL}/${id}`,
+        await fetch(`${CATEGORY_URL}/${id}`,
             {
                 method: 'PUT', headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({ name: name }),
@@ -88,7 +88,7 @@ export async function deleteCategory(id: number): Promise<boolean> {
     //    return false;
     //}
     try {
-        const response = await fetch(`${CATEGORY_URL}/${id}`,
+        await fetch(`${CATEGORY_URL}/${id}`,
             {
                 method: 'DELETE', headers: { 'Content-Type': 'application/json', }
             });

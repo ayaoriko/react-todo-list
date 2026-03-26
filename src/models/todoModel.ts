@@ -92,7 +92,7 @@ export async function updateTodoCheck(id: number, isCheck: boolean): Promise<boo
     //return true;
 
     try {
-        const response = await fetch(`${TODO_URL}/${id}/check`,
+        await fetch(`${TODO_URL}/${id}/check`,
             {
                 method: 'PUT', headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({ isCheck: isCheck }),
@@ -114,7 +114,7 @@ export async function updateTodoName(id: number, name: string): Promise<boolean>
     //}
     //return true;
     try {
-        const response = await fetch(`${TODO_URL}/${id}/name`,
+        await fetch(`${TODO_URL}/${id}/name`,
             {
                 method: 'PUT', headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({ name: name }),
@@ -137,7 +137,7 @@ export async function deleteTodo(id: number): Promise<boolean> {
     //}
     //return true;
     try {
-        const response = await fetch(`${TODO_URL}/${id}`,
+        await fetch(`${TODO_URL}/${id}`,
             {
                 method: 'DELETE', headers: { 'Content-Type': 'application/json', }
             });
