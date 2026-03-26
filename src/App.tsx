@@ -29,6 +29,7 @@ export default function App() {
   // 追加したTodoのIDを保存するstate
   const [lastAddedId, setLastAddedId] = useState<number | null>(null)
 
+  /** 
   // データの初回読み込み中は「読み込み中...」と表示するためのstate
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -46,7 +47,25 @@ export default function App() {
     };
     fetchData();
   }, []);
+***/
 
+  //  最初に表示されるカテゴリーのIDとstateの値を一致させる処理
+  const [inputSelect, setInputSelect] = useState<number>(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const categoryData = await fetchAllCategories();
+      const todoData = await fetchAllTodos();
+      setCategoryList(categoryData);
+      if (categoryData.length > 0) {
+        setInputSelect(categoryData[0].id);
+      }
+      setTodos(todoData);
+      setIsInitialLoad(false);
+    };
+    fetchData();
+  }, []);
 
   // todoRefsはDOM要素としてのTodoリスト」
   // 最初の1回しかアニメーションが効かない問題を解決するために、useRef({})で作ったtodoRefsに一度作ったrefを保存しておくことで、毎回新しいrefが作られないようにする
@@ -97,7 +116,7 @@ export default function App() {
   return (
     <div className="root-inner">
       <Header />
-      <TodoForm todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} setLastAddedId={setLastAddedId} />
+      <TodoForm todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} setLastAddedId={setLastAddedId} inputSelect={inputSelect} setInputSelect={setInputSelect} />
       <TodoList todos={todos} setTodos={setTodos} categoryList={categoryList} setCategoryList={setCategoryList} lastAddedId={lastAddedId} lastAddedRef={lastAddedRef} todoRefs={todoRefs.current} categoryRefs={categoryRefs.current} isInitialLoad={isInitialLoad} />
       <Footer />
     </div>
